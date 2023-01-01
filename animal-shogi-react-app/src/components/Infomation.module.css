@@ -1,0 +1,24 @@
+.infomation{
+    display: flex;
+    flex-direction: column;
+
+    /* border : 5px solid white;
+    border-radius: 10px; */
+    /* border-left: 5px solid white; */
+    margin : 0.5em;
+    margin-top : 0;
+    padding : 1em;
+    padding-top : 0;
+}
+
+.infomation .motigoma{
+    border : 0.2em solid white;
+    border-radius: 1em;
+    padding : 0.2em;
+}
+
+.infomation .header{
+    border-top : 2px solid gray;
+    margin-top : 0.5em;
+    padding-top: 0.5em;
+}
