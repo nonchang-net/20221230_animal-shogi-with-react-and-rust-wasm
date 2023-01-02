@@ -1,5 +1,14 @@
 import styles from './Cell.module.css';
 
+
+
+// export interface IActor {
+// 	id: number
+// 	name: string
+// 	// skillIds?: number[]
+// 	// skills: Skill[]
+// }
+
 export default ()=>{
 
     function test(){

@@ -1,15 +1,26 @@
 import styles from './Board.module.css';
+
+
+import {Side} from './GameView';
 import Cell from './Cell';
 
-export default ()=>{
+interface IProps{
+	data: Object
+}
+
+
+export default (props: IProps)=>{
+
+    // 一旦ログ出し
+    // console.log(props.data);
+
 	return (
         <>
             <div className={styles.board}>
-                <div>　</div>
-                <div>ａ</div>
-                <div>ｂ</div>
-                <div>ｃ</div>
-                
+                <div></div>
+                <div>a</div>
+                <div>b</div>
+                <div>c</div>
                 
                 <div>1</div>
                     <div id='a1'><Cell /></div>
