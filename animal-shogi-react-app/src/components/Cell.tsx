@@ -38,7 +38,12 @@ export default (props: IProps)=>{
     }
 
     return (
-        <div className={(props.cellData.side == Side.B ? styles.invertCell : styles.cell)} onClick={testOnClick}>
+        <div className={`
+            ${styles.cell}
+            ${props.cellData.side == Side.A ? styles.selectable : ""}
+            ${props.cellData.side == Side.B ? styles.invert : ""}
+            ${props.cellData.koma == Koma.NULL ? styles.empty : ""}
+        `} onClick={testOnClick}>
             {komaChara()}
         </div>
 	);

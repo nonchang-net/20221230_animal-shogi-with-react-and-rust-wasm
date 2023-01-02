@@ -12,23 +12,15 @@
     font-size : 1em;
 }
 
-.cell:hover{
-    background : green;
+.invert{
+    transform:rotate(180deg);
+    border-color:rgba(128, 128, 128, 0.2)
 }
 
-.invertCell{
+.empty{
+    border-color:rgba(128, 128, 128, 0.2)
+}
 
-    display : flex;
-    justify-content: center;
-    align-items: center;
-    margin : 0.03em;
-
-    border : 1px solid gray;
-    border-radius: 10px;
-    width : 2em;
-    height : 2em;
-
-    font-size : 1em;
-    
-    transform:rotate(180deg);
+.selectable:hover{
+    background : green;
 }

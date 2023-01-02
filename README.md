@@ -74,6 +74,22 @@
 	- 今回の判断
 		- 今回はcreate-react-app生成状態から極力追加モジュールなしで進めたいこともあり、CSS Modulesで。
 
+- 20230102: reactでclassNameを複数設定する方法をメモ
+	- 今回はアニメーション類を使うわけでもないので、極力CSSの張り替えだけで表現を完了させたく。
+		- この辺を把握してなかったので調べる。
+		- [【React】classNameでよく使う定義方法(複数クラス、条件付きクラス)](https://nishinatoshiharu.com/classname-pattern/)
+			- 空白区切り。
+			- ```className={`${size === "s" ? styles.btnSmall : styles.btnLarge}`}```
+			- うーん。つまり、あまり綺麗ではない気がするものの 
+				```js
+					<div className={`
+						${styles.cell}
+						${props.cellData.side == Side.B ? styles.invert : ""}
+					`} onClick={testOnClick}>
+				```
+			- という書き方で、条件指定で追加クラスを設定することは可能っぽい。
+			- 目的は達成できたので、一旦これで。もっといい書き方がありそうな気はする。
+			- `classnames`追加モジュール導入は避けておく。そこまで利便性が上がる感じでもなさそうなので。
 
 - CSS実装方針メモ
 	- 元プロジェクトが昔ながらのtableレイアウトだったので、flex/gridレイアウトに置き換えておく。
