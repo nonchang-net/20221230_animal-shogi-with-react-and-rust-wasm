@@ -1,11 +1,11 @@
 import styles from './Board.module.css';
 
 
-import {Side} from './GameView';
+import {Side, BoardData} from './GameView';
 import Cell from './Cell';
 
 interface IProps{
-	data: Object
+	data: BoardData
 }
 
 
@@ -23,21 +23,21 @@ export default (props: IProps)=>{
                 <div>c</div>
                 
                 <div>1</div>
-                    <div id='a1'><Cell /></div>
-                    <div id='b1' className={styles.invert}><Cell /></div>
-                    <div id='c1'><Cell /></div>
+                    <Cell cellData={props.data[0][0]} />
+                    <div id='b1'><Cell cellData={props.data[0][1]} /></div>
+                    <div id='c1'><Cell cellData={props.data[0][2]} /></div>
                 <div>2</div>
-                    <div id='a2'><Cell /></div>
-                    <div id='b2'><Cell /></div>
-                    <div id='c2'><Cell /></div>
+                    <div><Cell cellData={props.data[1][0]} /></div>
+                    <div id='b1'><Cell cellData={props.data[1][1]} /></div>
+                    <div id='c1'><Cell cellData={props.data[1][2]} /></div>
                 <div>3</div>
-                    <div id='a3'><Cell /></div>
-                    <div id='b3'><Cell /></div>
-                    <div id='c3'><Cell /></div>
+                    <Cell cellData={props.data[2][0]} />
+                    <Cell cellData={props.data[2][1]} />
+                    <Cell cellData={props.data[2][2]} />
                 <div>4</div>
-                    <div id='a4'><Cell /></div>
-                    <div id='b4'><Cell /></div>
-                    <div id='c4'><Cell /></div>
+                    <Cell cellData={props.data[3][0]} />
+                    <Cell cellData={props.data[3][1]} />
+                    <Cell cellData={props.data[3][2]} />
             </div>
         </>
 

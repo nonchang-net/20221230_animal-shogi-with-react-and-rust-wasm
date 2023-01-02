@@ -15,3 +15,20 @@
 .cell:hover{
     background : green;
 }
+
+.invertCell{
+
+    display : flex;
+    justify-content: center;
+    align-items: center;
+    margin : 0.03em;
+
+    border : 1px solid gray;
+    border-radius: 10px;
+    width : 2em;
+    height : 2em;
+
+    font-size : 1em;
+    
+    transform:rotate(180deg);
+}

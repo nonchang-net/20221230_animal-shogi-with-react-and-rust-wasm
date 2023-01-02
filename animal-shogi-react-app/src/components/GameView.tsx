@@ -27,12 +27,12 @@ export const enum Koma{
 	Niwatori
 }
 
-interface ICellData{
+export interface ICellData{
     side: Side;
     koma: Koma;
 }
 
-type BoardData = Array<Array<ICellData>>;
+export type BoardData = Array<Array<ICellData>>;
 
 // まずは手打ちで初期盤面情報を定義
 const InitialBoardData: BoardData = [
@@ -109,6 +109,13 @@ interface IHistoryData{
 // ヒストリ型: ただのIHisotyrDataの配列
 type HistoriesData = Array<IHistoryData>;
 
+interface IGameData{
+    humanIsFirst: boolean // 先行か否か
+    currentBoardData: BoardData
+    historiesData: HistoriesData
+    tegomas: Array<Array<Koma>> // index 0=自分の手駒、1=相手の手駒
+}
+
 
 // 以下はメモ: ルール実装クラスを作って移動するかも
 
@@ -149,11 +156,13 @@ type HistoriesData = Array<IHistoryData>;
 
 export default () => {
 
+    let currentBoard = InitialBoardData;
+
     return (
         <div className={styles.GameView}>
             <div>
                 {/* メインの将棋盤 */}
-                <Board data={InitialBoardData}/>
+                <Board data={currentBoard}/>
                 {/* <Board data={{data:123}}/> */}
             </div>
             <div>
