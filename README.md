@@ -12,6 +12,14 @@
 - Vanilla JavaScriptはvscodeで型補完が効かないのが辛いので。
 - TypeScript固有の機能は深追いせず。
 
+## React実装方針のメモ
+
+- TypeScript導入
+- Functional Component(関数コンポーネント)で実装
+	- https://qiita.com/otanu/items/434cd326754ac989fcbe
+	- React Hooks以降、これが一番工数が少なく記述量も少ないシンプルな方法と判断。
+- React Hooksも採用していく。よくわかってないところもあるので今回潰す。
+
 ## TypeScriptの型宣言周りの復習
 
 - 普段Better JavaScriptとしてしかTypeScriptを使ってないので、今回は盤情報をちゃんと型定義して進められるように復習しておく。

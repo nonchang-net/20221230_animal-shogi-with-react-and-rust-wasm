@@ -1,15 +1,15 @@
 import styles from './Board.module.css';
 
-
-import {Side, BoardData} from './GameView';
+// import {Side, Koma} from '../data/Constants';
+import {IBoardData} from '../data/BoardData';
 import Cell from './Cell';
 
 interface IProps{
-	data: BoardData
+	data: IBoardData
 }
 
 
-export default (props: IProps)=>{
+export default function Board (props: IProps){
 
     // 一旦ログ出し
     // console.log(props.data);
@@ -24,12 +24,12 @@ export default (props: IProps)=>{
                 
                 <div>1</div>
                     <Cell cellData={props.data[0][0]} />
-                    <div id='b1'><Cell cellData={props.data[0][1]} /></div>
-                    <div id='c1'><Cell cellData={props.data[0][2]} /></div>
+                    <Cell cellData={props.data[0][1]} />
+                    <Cell cellData={props.data[0][2]} />
                 <div>2</div>
-                    <div><Cell cellData={props.data[1][0]} /></div>
-                    <div id='b1'><Cell cellData={props.data[1][1]} /></div>
-                    <div id='c1'><Cell cellData={props.data[1][2]} /></div>
+                    <Cell cellData={props.data[1][0]} />
+                    <Cell cellData={props.data[1][1]} />
+                    <Cell cellData={props.data[1][2]} />
                 <div>3</div>
                     <Cell cellData={props.data[2][0]} />
                     <Cell cellData={props.data[2][1]} />

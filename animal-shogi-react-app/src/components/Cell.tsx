@@ -1,22 +1,19 @@
 import styles from './Cell.module.css';
-import {ICellData, Koma, Side} from './GameView';
+// import {ICellData, Koma, Side} from './GameView';
 
-
-// export interface IActor {
-// 	id: number
-// 	name: string
-// 	// skillIds?: number[]
-// 	// skills: Skill[]
-// }
+import {Side, Koma} from '../data/Constants';
+import {ICellData} from '../data/CellData';
 
 interface IProps{
 	cellData: ICellData
 }
 
-export default (props: IProps)=>{
+export default function Cell (props: IProps){
 
-    function testOnClick(){
-        window.alert("123");
+    const testOnClick = ()=>{
+        if(props.cellData.side === Side.A){
+            window.alert("選択可能なコマです。");
+        }
     }
 
     const komaChara = (): JSX.Element =>{
@@ -40,9 +37,9 @@ export default (props: IProps)=>{
     return (
         <div className={`
             ${styles.cell}
-            ${props.cellData.side == Side.A ? styles.selectable : ""}
-            ${props.cellData.side == Side.B ? styles.invert : ""}
-            ${props.cellData.koma == Koma.NULL ? styles.empty : ""}
+            ${props.cellData.side === Side.A ? styles.selectable : ""}
+            ${props.cellData.side === Side.B ? styles.invert : ""}
+            ${props.cellData.koma === Koma.NULL ? styles.empty : ""}
         `} onClick={testOnClick}>
             {komaChara()}
         </div>

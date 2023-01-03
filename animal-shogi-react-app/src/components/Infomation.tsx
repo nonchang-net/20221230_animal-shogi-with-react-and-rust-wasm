@@ -1,8 +1,20 @@
 import styles from './Infomation.module.css';
 import Cell from './Cell';
-import { Koma, Side } from './GameView';
+import {Side, Koma} from '../data/Constants';
+import {GameData} from '../data/GameData';
 
-export default ()=>{
+interface IProps{
+	data: GameData
+}
+
+export default function Infomation(props: IProps){
+
+    // const getDummyData1 = (): JSX.Element => {
+    //     let result = <></>
+    //     result.
+    //     return result
+    // }
+
 	return (
         <div className={styles.infomation}>
           <div>相手の持ち駒</div>
