@@ -2,21 +2,17 @@ import styles from './Cell.module.css';
 // import {ICellData, Koma, Side} from './GameView';
 
 import {Side, Koma} from '../data/Constants';
-import {ICellData} from '../data/CellData';
+import {CellData} from '../data/CellData';
 
 interface IProps{
-	cellData: ICellData
+	cellData: CellData,
+	onClicked: () => void
+
 }
 
 export default function Cell (props: IProps){
 
-    const testOnClick = ()=>{
-        if(props.cellData.side === Side.A){
-            window.alert("選択可能なコマです。");
-        }
-    }
-
-    const komaChara = (): JSX.Element =>{
+    const komaChara = ()=>{
         switch(props.cellData.koma){
             case Koma.Hiyoko:
                 return (<>🐥</>);
@@ -40,7 +36,7 @@ export default function Cell (props: IProps){
             ${props.cellData.side === Side.A ? styles.selectable : ""}
             ${props.cellData.side === Side.B ? styles.invert : ""}
             ${props.cellData.koma === Koma.NULL ? styles.empty : ""}
-        `} onClick={testOnClick}>
+        `} onClick={()=>{props.onClicked()}}>
             {komaChara()}
         </div>
 	);

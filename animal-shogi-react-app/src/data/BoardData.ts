@@ -1,74 +1,77 @@
-import {Side, Koma} from './Constants';
-import {ICellData} from './CellData';
-
-export interface IBoardData extends Array<Array<ICellData>>{}
-
-// まずは手打ちで初期盤面情報を定義
-export const InitialBoardData: IBoardData = [
-    [
-        {
-            side: Side.B,
-            koma: Koma.Kirin
-        },
-        {
-            side: Side.B,
-            koma: Koma.Lion
-        },
-        {
-            side: Side.B,
-            koma: Koma.Zou
-        },
-    ],
-    [
-        {
-            side: Side.Free,
-            koma: Koma.NULL
-        },
-        {
-            side: Side.B,
-            koma: Koma.Hiyoko
-        },
-        {
-            side: Side.Free,
-            koma: Koma.NULL
-        },
-    ],
-    [
-        {
-            side: Side.Free,
-            koma: Koma.NULL
-        },
-        {
-            side: Side.A,
-            koma: Koma.Hiyoko
-        },
-        {
-            side: Side.Free,
-            koma: Koma.NULL
-        },
-    ],
-    [
-        {
-            side: Side.A,
-            koma: Koma.Zou
-        },
-        {
-            side: Side.A,
-            koma: Koma.Lion
-        },
-        {
-            side: Side.A,
-            koma: Koma.Kirin
-        },
-    ],
-];
-
-
-// 実装クラス
+/**
+ * 盤情報管理クラス
 // - 実データとしてのArray<Array<ICellData>>を継承して必要なメソッドを生やしたもの
-// - ややこしくなりそうならデータは普通にメンバとして持たせるかな
+//   - これ大丈夫？ ややこしくなりそうならデータは普通にメンバとして持たせる？
 // - BoardDataは手駒を持たせたほうがいいのかな……？ GameDataに分割すると、BoardData内のメソッドで手駒を直接評価できないのが面倒くさそう。
-export class BoardData extends Array<Array<ICellData>>{
+ */
+import {Side, Koma} from './Constants';
+import {CellData} from './CellData';
+
+export class BoardData extends Array<Array<CellData>>{
+
+    constructor(){
+        super()
+        this.Initialize()
+    }
+
+    public Initialize(){
+		this[0]=[
+            {
+                side: Side.B,
+                koma: Koma.Kirin
+            },
+            {
+                side: Side.B,
+                koma: Koma.Lion
+            },
+            {
+                side: Side.B,
+                koma: Koma.Zou
+            },
+        ];
+        this[1]=[
+            {
+                side: Side.Free,
+                koma: Koma.NULL
+            },
+            {
+                side: Side.B,
+                koma: Koma.Hiyoko
+            },
+            {
+                side: Side.Free,
+                koma: Koma.NULL
+            },
+        ];
+        this[2]=[
+            {
+                side: Side.Free,
+                koma: Koma.NULL
+            },
+            {
+                side: Side.A,
+                koma: Koma.Hiyoko
+            },
+            {
+                side: Side.Free,
+                koma: Koma.NULL
+            },
+        ];
+        this[3]=[
+            {
+                side: Side.A,
+                koma: Koma.Zou
+            },
+            {
+                side: Side.A,
+                koma: Koma.Lion
+            },
+            {
+                side: Side.A,
+                koma: Koma.Kirin
+            },
+        ];
+    }
 
     /**
      * 評価開始

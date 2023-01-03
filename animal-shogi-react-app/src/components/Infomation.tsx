@@ -19,11 +19,11 @@ export default function Infomation(props: IProps){
         <div className={styles.infomation}>
           <div>相手の持ち駒</div>
             <div className={styles.motigoma}>
-                <Cell cellData={{side:Side.B, koma:Koma.Hiyoko}} />
+                <Cell cellData={{side:Side.B, koma:Koma.Hiyoko}} onClicked={()=>{}} />
             </div>
           <div>あなたの持ち駒</div>
             <div className={styles.motigoma}>
-                <Cell cellData={{side:Side.A, koma:Koma.Hiyoko}} />
+                <Cell cellData={{side:Side.A, koma:Koma.Hiyoko}} onClicked={()=>{}} />
             </div>
           <div className={styles.header}>testtest<br /> testtest2</div>
         </div>

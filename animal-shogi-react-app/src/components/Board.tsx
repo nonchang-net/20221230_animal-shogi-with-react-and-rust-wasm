@@ -1,18 +1,38 @@
 import styles from './Board.module.css';
 
 // import {Side, Koma} from '../data/Constants';
-import {IBoardData} from '../data/BoardData';
+// import {IBoardData} from '../data/BoardData';
+import {GameData} from '../data/GameData';
 import Cell from './Cell';
 
 interface IProps{
-	data: IBoardData
+	data: GameData
 }
-
 
 export default function Board (props: IProps){
 
     // 一旦ログ出し
     // console.log(props.data);
+
+    const boardData = props.data.currentBoardData;
+
+    const onCellClicked = (x:number, y:number)=>{
+        console.log("onClicked() ",x,y, boardData[x][y])
+    }
+
+    const renderColumns =(rowIndex:number) => {
+        const elements:Array<JSX.Element> = [];
+        for(let y=0; y<4 ; y++){
+            elements.push(<div>{y+1}</div>)
+            for(let x=0; x<3 ; x++){
+                elements.push(<Cell
+                    cellData={boardData[y][x]}
+                    onClicked={()=>{onCellClicked(y,x)}}
+                />);
+            }
+        }
+        return elements
+    }
 
 	return (
         <>
@@ -21,23 +41,7 @@ export default function Board (props: IProps){
                 <div>a</div>
                 <div>b</div>
                 <div>c</div>
-                
-                <div>1</div>
-                    <Cell cellData={props.data[0][0]} />
-                    <Cell cellData={props.data[0][1]} />
-                    <Cell cellData={props.data[0][2]} />
-                <div>2</div>
-                    <Cell cellData={props.data[1][0]} />
-                    <Cell cellData={props.data[1][1]} />
-                    <Cell cellData={props.data[1][2]} />
-                <div>3</div>
-                    <Cell cellData={props.data[2][0]} />
-                    <Cell cellData={props.data[2][1]} />
-                    <Cell cellData={props.data[2][2]} />
-                <div>4</div>
-                    <Cell cellData={props.data[3][0]} />
-                    <Cell cellData={props.data[3][1]} />
-                    <Cell cellData={props.data[3][2]} />
+                {renderColumns(0)}
             </div>
         </>
 
