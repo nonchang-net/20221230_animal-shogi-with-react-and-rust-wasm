@@ -23,7 +23,10 @@ export default function Board (props: IProps){
         // ちょっと間借りテストなど
         // console.log("TEST_getRandomCell():", Utils.TEST_getRandomCell(boardData))
         // console.log("board.TEST_GetRandomCell", board.TEST_GetRandomCell())
-        console.log("board.GetAllSettableCell()", board.GetAllSettableCell(pos))
+        // console.log("board.GetAllSettableCell()", board.GetAllSettableCell(pos))
+
+        // console.log("onClicked() enableMoves? ", board.playerSelectablePositions. )
+        console.log("board.playerSelectablePositions:", board.playerSelectablePositions)
     }
 
     const renderColumns =(rowIndex:number) => {
@@ -33,6 +36,8 @@ export default function Board (props: IProps){
             for(let x=0; x<3 ; x++){
                 elements.push(<Cell
                     cellData={board[y][x]}
+                    cellIndex={{x:x, y:y}}
+                    boardData={board}
                     onClicked={()=>{onCellClicked(new Position(x,y))}}
                 />);
             }

@@ -20,10 +20,19 @@ export class GameData{
 
     constructor(){
         this.humanIsFirst = true; //とりあえず人間先行固定
-        this.currentBoardData = new BoardData();
 		this.historiesData = new Array<IHistoryData>();
 		this.tegomas = new Array<Array<Koma>>();
 		this.turn = 0;
+
+		// boardDataはこのクラス自体に依存しているので最後
+        this.currentBoardData = new BoardData(this);
+
+		// 最初の評価を実行しておく
+		this.currentBoardData.Evaluate()
     }
+
+	public IsHumanIsFirst():boolean{
+		return this.humanIsFirst;
+	}
 
 }

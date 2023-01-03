@@ -4,12 +4,17 @@
     align-items: center;
     margin : 0.03em;
 
-    border : 1px solid gray;
-    border-radius: 10px;
+    /* border : 1px solid gray;
+    border-radius: 10px; */
     width : 2em;
     height : 2em;
 
     font-size : 1em;
+}
+
+.selectable{
+    border : 1px solid gray;
+    border-radius: 10px;
 }
 
 .invert{

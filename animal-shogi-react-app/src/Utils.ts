@@ -37,14 +37,25 @@ export class Position{
 
 
 // 0〜(x-1)の間の整数をランダムで返す
-const randomRange = (max: number):number => {
+const RandomRange = (max: number):number => {
 	return Math.floor(Math.random()*max)
+}
+
+// Side.A/Bを反転する
+const ReverseSide = (side:Side):Side =>{
+	switch(side){
+		case Side.A: return Side.B;
+		case Side.B: return Side.A;
+		default: throw new Error("cannot reverse side from: "+side.toString())
+	}
 }
 
 // 公開メソッド一覧をexport default
 const publics={
 	// privates？ 検討中
-	randomRange: randomRange,
+	RandomRange: RandomRange,
+
+	ReverseSide: ReverseSide,
 
 	// テスト系
 	// TEST_getRandomCell: TEST_getRandomCell,
