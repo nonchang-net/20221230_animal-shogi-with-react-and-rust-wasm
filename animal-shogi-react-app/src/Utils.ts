@@ -7,38 +7,47 @@ import { Koma, Side } from "./data/Constants"
 import { BoardData } from "./data/BoardData"
 import { CellData } from "./data/CellData"
 
-// 0〜(x-1)の間の整数をランダムで返す
-const randomRange = (max: number):number => {
-    return Math.floor(Math.random()*max)
-}
-
-// boardからランダムなセルを一つ取得する
-const TEST_getRandomCell = (boardData:BoardData):CellData=>{
-    return boardData[randomRange(3)][randomRange(4)];
-}
-
-
-//side側の盤上コマを全てコマ情報配列をタプル「[Koma,x,y]」として取得。
-//・getAttackableCells内のコードを、AIの探索で共有するため関数化。
-const getOnboardKomas=function(board:BoardData, side:Side){
-	let results = new Array<[Koma,number,number]>();
-	for(var y=0 ; y<4 ; y++){
-		for(var x=0 ; x<3 ; x++){
-			var c=board[x][y] ;
-			if(c.side===side){
-				results.push([c.koma,x,y]);
-			}
+// 座標指定クラス
+// - 差分をAddできるようにしたかっただけ。ただのベクトル
+export class Position{
+	x:number
+	y:number
+	constructor(x:number, y:number){
+		this.x = x
+		this.y = y
+	}
+	// サイドに応じてPositionを可変させる
+	// - 要するに上から見たSide.Bの時はy座標のプラマイを逆にする
+	public Add(pos:Position, side:Side = Side.A): Position{
+		if(side === Side.A){
+			return new Position(this.x + pos.x, this.y + pos.y)
+		}else{
+			return new Position(this.x + pos.x, this.y - pos.y)
 		}
 	}
-	return results ;
+
+	// positionが盤の範囲内かチェック
+	// TODO: 責務ここじゃない気はする
+	public IsValidIndex():boolean{
+		if(this.x < 0 || this.y < 0) return false;
+		if(this.x > 2 || this.y > 3) return false;
+		return true
+	}
+}
+
+
+// 0〜(x-1)の間の整数をランダムで返す
+const randomRange = (max: number):number => {
+	return Math.floor(Math.random()*max)
 }
 
 // 公開メソッド一覧をexport default
 const publics={
-    randomRange: randomRange,
+	// privates？ 検討中
+	randomRange: randomRange,
 
-    // test系
-    TEST_getRandomCell: TEST_getRandomCell,
+	// テスト系
+	// TEST_getRandomCell: TEST_getRandomCell,
 }
 export default publics
 

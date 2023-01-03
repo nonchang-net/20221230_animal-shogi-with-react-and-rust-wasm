@@ -6,17 +6,11 @@ import Infomation from './components/Infomation';
 
 import {GameData} from './data/GameData'
 
-import Utils from './Utils'
+// import Utils from './Utils'
 
 export default function App() {
 
 	const gameData = new GameData();
-
-    // ちょっとテスト
-    // for(let i=0 ; i<10 ; i++){
-    //     // console.log("randtest:",Utils.getRandomKoma())
-	// 	console.log("TEST_getRandomCell():", Utils.TEST_getRandomCell(gameData.currentBoardData))
-    // }
 
 	return (
 		<div className={styles.App}>
