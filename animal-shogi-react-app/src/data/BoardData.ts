@@ -112,6 +112,11 @@ export class BoardData extends Array<Array<CellData>>{
 	// Positionを元にセル情報を取得
 	// TODO: 最終的にこれ経由でしか取得できないようにして、Array extendsやめようかな
 	public Get(pos:Position):CellData{
+
+		if(!pos.IsValidIndex()){
+			throw new Error(`Get(): not valid. `+pos.x+":"+pos.y)
+		}
+
 		// note: 配列リテラルで書いた時の表現とpositionの直感性がx,y逆なのでここで吸収している。。
 		return this[pos.y][pos.x]
 	}
@@ -144,15 +149,14 @@ export class BoardData extends Array<Array<CellData>>{
 	// - Side.A/Bそれぞれの、着手可能手の一覧を収集
 	// - Side.A/Bそれぞれの、効いている場所一覧を収集
 	// - (UI用) プレイヤーの選択可能な駒の一覧を収集
-	// - 
 	public Evaluate(){
 		// TODO: インデックスシグネチャよくわからんので一旦anyな君(´・ω・｀)
 		this.Sides[Side.A] = {
-			enableMoves: new Array<[from:Position, to:Position]>,
+			enableMoves: new Array<{from:Position, to:Position}>,
 			attackablePositionMap: this.GetFilledFlagBoard(false)
 		}
 		this.Sides[Side.B] = {
-			enableMoves: new Array<[from:Position, to:Position]>,
+			enableMoves: new Array<{from:Position, to:Position}>,
 			attackablePositionMap: this.GetFilledFlagBoard(false)
 		}
 		this.playerSelectablePositions = []
@@ -215,6 +219,50 @@ export class BoardData extends Array<Array<CellData>>{
 		})
 
 		// console.log("Evaluate():",playerSelectablePositions,Sides)
+	}
+
+	// プレイヤーが選択可能な駒かどうかを返す
+	// - depends on: Evaluate()実行後に正常動作。dirtyな時に誤動作するので防止したい
+	public IsSelectable(pos:Position):boolean{
+		const cell = this.Get(pos)
+		if(cell.side !== Side.A){
+			// console.log("enableMove? サイドがAじゃなかった")
+			return false;
+		}
+		for(const move of this.Sides[Side.A].enableMoves as Array<{from:Position, to:Position}>){
+			if(!move){
+				console.error("move is failsy...", move)
+				return false;
+			}
+			// console.log("IsSelectable() 評価:", move.from, pos)
+			if(!move.from){
+				console.error("move.from is failsy...", move)
+				return false;
+			}
+			if(move.from.EqualsTo(pos)) return true;
+		
+		}
+		return false;
+	}
+
+	// プレイヤーの選択したposの駒の移動可能なポジション一覧を取得
+	// - TODO: これEvaluateで整形しておけばいいんじゃないだろうか
+	public GetMovablesByPos(pos:Position):Array<Position>{
+		let results = new Array<Position>
+		for(const target of this.Sides[Side.A].enableMoves){
+			if(target.from.EqualsTo(pos)) results.push(target.to)
+		}
+		return results
+	}
+
+	// positionsからtargetPosが移動可能セルかどうかを検索
+	// - TODO: ここ再検索になってるのがよろしくないし、利用側の判定もなかなか無駄なことをしている
+	public IsMovablePos(positions:Array<Position>,targetPos:Position){
+		// console.log(positions)
+		for(const pos of positions){
+			if(pos.EqualsTo(targetPos)) return true;
+		}
+		return false;
 	}
 
 	

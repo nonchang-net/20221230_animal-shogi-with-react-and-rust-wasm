@@ -24,6 +24,7 @@
 		- https://qiita.com/otanu/items/434cd326754ac989fcbe
 		- React Hooks以降、これが一番工数が少なく記述量も少ないシンプルな方法と判断。
 	- React Hooksも採用していく。よくわかってないところもあるので今回潰す。
+		- [フックの導入](https://ja.reactjs.org/docs/hooks-intro.html)
 
 - ロジック類だけJestのテストコードを揃えていく。
 	- テストファイルは元ファイルと同じ場所に置く。

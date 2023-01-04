@@ -17,3 +17,5 @@ Cargo.lock
 # 20221229: macOS特有の不要なやつ
 .DS_Store
 */.DS_Store
+
+__参考

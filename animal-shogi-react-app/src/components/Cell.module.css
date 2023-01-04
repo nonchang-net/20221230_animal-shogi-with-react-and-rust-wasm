@@ -10,22 +10,41 @@
     height : 2em;
 
     font-size : 1em;
-}
 
-.selectable{
-    border : 1px solid gray;
+    border : 0.1em solid transparent;
     border-radius: 10px;
 }
 
+
 .invert{
     transform:rotate(180deg);
-    border-color:rgba(128, 128, 128, 0.2)
 }
 
+/* .invert,
 .empty{
     border-color:rgba(128, 128, 128, 0.2)
+} */
+
+.selectable{
+    border-color: gray;
 }
 
 .selectable:hover{
     background : green;
+}
+
+.selected{
+    border-color : rgba(255,0,0,0.5);
+}
+
+.selected:hover{
+    background : rgba(255,128,128,0.8);
+}
+
+.movable{
+    border-color: rgba(0,255,0,0.5);
+}
+
+.movable:hover{
+    background: green;
 }

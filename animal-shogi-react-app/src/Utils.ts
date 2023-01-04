@@ -33,6 +33,10 @@ export class Position{
 		if(this.x > 2 || this.y > 3) return false;
 		return true
 	}
+	public EqualsTo(pos:Position):boolean{
+		if(pos===undefined) return false;
+		return (pos.x === this.x && pos.y === this.y)
+	}
 }
 
 

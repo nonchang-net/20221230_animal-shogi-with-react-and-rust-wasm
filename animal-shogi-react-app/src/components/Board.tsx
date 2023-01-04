@@ -1,11 +1,13 @@
-import Utils, { Position } from '../Utils';
+import {useState} from 'react'
+import Utils, { Position } from '../Utils'
 
-import styles from './Board.module.css';
+import styles from './Board.module.css'
 
-// import {Side, Koma} from '../data/Constants';
-// import {IBoardData} from '../data/BoardData';
-import {GameData} from '../data/GameData';
-import Cell from './Cell';
+// import {Side, Koma} from '../data/Constants'
+// import {IBoardData} from '../data/BoardData'
+import {GameData} from '../data/GameData'
+import Cell from './Cell'
+import { Side } from '../data/Constants'
 
 interface IProps{
 	data: GameData
@@ -18,27 +20,59 @@ export default function Board (props: IProps){
 
     const board = props.data.currentBoardData;
 
-    const onCellClicked = (pos:Position)=>{
-        console.log("onClicked() ",pos.x, pos.y, board.Get(pos))
-        // ちょっと間借りテストなど
-        // console.log("TEST_getRandomCell():", Utils.TEST_getRandomCell(boardData))
-        // console.log("board.TEST_GetRandomCell", board.TEST_GetRandomCell())
-        // console.log("board.GetAllSettableCell()", board.GetAllSettableCell(pos))
+    // セル選択状態state
+    const [isSelected, setSelected] = useState(false);
+    const [selectedPos, setSelectedPos] = useState(new Position(-1,-1));
 
-        // console.log("onClicked() enableMoves? ", board.playerSelectablePositions. )
-        console.log("board.playerSelectablePositions:", board.playerSelectablePositions)
+    const onCellClicked = (pos:Position)=>{
+        // console.log("onClicked() ",pos.x, pos.y, board.Get(pos))
+        // console.log("onClicked() enableMoves? ", board.Sides[Side.A].enableMoves)
+        // console.log("board.playerSelectablePositions:", board.playerSelectablePositions)
+        
+        // console.log("onClicked() isSelected", isSelected, selectedPos)
+        // console.log("onClicked() GetMovablesByPos()", board.GetMovablesByPos(pos))
+        
+        if(isSelected){
+            if(pos.EqualsTo(selectedPos)){
+                // 選択状態から同じセルをクリック → 選択解除
+                setSelectedPos(new Position(-1,-1));
+                setSelected(false);
+            }else if(board.IsMovablePos(board.GetMovablesByPos(selectedPos), pos)){
+                // TODO: 選択状態から移動可能セルをクリックした → 移動実行
+                // TODO: 成るか否かの選択UI
+                console.log("今作ってます（蕎麦屋）")
+            }
+        }else{
+            if(board.IsSelectable(pos)){
+                // 何も選択されていない時に選択可能なセルをクリックした → 選択実行
+                setSelectedPos(pos);
+                setSelected(true);
+            }
+        }
     }
 
     const renderColumns =(rowIndex:number) => {
         const elements:Array<JSX.Element> = [];
+        const selectedCellMovables = board.GetMovablesByPos(selectedPos)
+        // console.log("selectedCellMovables",selectedCellMovables)
         for(let y=0; y<4 ; y++){
             elements.push(<div>{y+1}</div>)
             for(let x=0; x<3 ; x++){
+                // console.log("renderColumns(): ",
+                //     x,y,isSelected,selectedPos,
+                //     new Position(x,y).EqualsTo(selectedPos),
+                //     board.IsMovablePos(selectedCellMovables,selectedPos)
+                // )
+                const pos = new Position(x,y)
                 elements.push(<Cell
+                    key={"boardcells_"+x+"_"+y}
+                    selectable={(!isSelected && board.IsSelectable(pos))}
+                    selected={(isSelected && pos.EqualsTo(selectedPos))}
+                    movable={(isSelected && board.IsMovablePos(selectedCellMovables, pos))}
                     cellData={board[y][x]}
                     cellIndex={{x:x, y:y}}
                     boardData={board}
-                    onClicked={()=>{onCellClicked(new Position(x,y))}}
+                    onClicked={()=>{onCellClicked(pos)}}
                 />);
             }
         }
