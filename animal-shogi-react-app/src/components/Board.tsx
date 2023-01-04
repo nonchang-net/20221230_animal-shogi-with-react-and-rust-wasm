@@ -23,6 +23,7 @@ export default function Board (props: IProps){
     // セル選択状態state
     const [isSelected, setSelected] = useState(false);
     const [selectedPos, setSelectedPos] = useState(new Position(-1,-1));
+    // const [board, setBoard] = useState(props.data.currentBoardData);
 
     const onCellClicked = (pos:Position)=>{
         // console.log("onClicked() ",pos.x, pos.y, board.Get(pos))
@@ -38,9 +39,17 @@ export default function Board (props: IProps){
                 setSelectedPos(new Position(-1,-1));
                 setSelected(false);
             }else if(board.IsMovablePos(board.GetMovablesByPos(selectedPos), pos)){
-                // TODO: 選択状態から移動可能セルをクリックした → 移動実行
+                // 選択状態から移動可能セルをクリックした → 移動実行
                 // TODO: 成るか否かの選択UI
-                console.log("今作ってます（蕎麦屋）")
+
+                // 移動実行
+                board.Move(selectedPos, pos);
+
+                // 選択解除 - ここでboard状態も反映される
+                setSelectedPos(new Position(-1,-1));
+                setSelected(false);
+                
+                // TODO: ターン変更
             }
         }else{
             if(board.IsSelectable(pos)){

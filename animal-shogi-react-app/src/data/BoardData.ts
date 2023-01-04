@@ -8,6 +8,7 @@ import {Side, Koma} from './Constants'
 import {CellData} from './CellData'
 import Utils, {Position} from '../Utils'
 import { GameData } from './GameData'
+import Cell from '../components/Cell';
 
 export class BoardData extends Array<Array<CellData>>{
 
@@ -263,6 +264,28 @@ export class BoardData extends Array<Array<CellData>>{
 			if(pos.EqualsTo(targetPos)) return true;
 		}
 		return false;
+	}
+
+	public Move(from:Position, to:Position){
+		// 移動するセルの情報
+		const mover = this.Get(from);
+		// 移動したSide情報を獲得
+		const side = mover.side;
+		// 移動先のセル状態
+		const cuptured = this.Get(to);
+		// 移動先コマがNULLじゃない場合
+		if(cuptured.koma !== Koma.NULL){
+			console.log("TODO: 手駒に移動")
+		}
+		// 移動先に移動元をコピー
+		this[to.y][to.x] = mover
+		// 移動元をクリア
+		this[from.y][from.x] = {koma:Koma.NULL, side:Side.Free}
+
+		// 再評価
+		this.Evaluate()
+
+		// note: ターン変更処理は責務外なのでGameDataに任せる
 	}
 
 	
