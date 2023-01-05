@@ -41,7 +41,7 @@ export default function Infomation(props: IProps) {
 			<div className={styles.motigoma}>
 				{renderTegomas(Side.A)}
 			</div>
-			<div className={styles.header}>testtest<br /> testtest2</div>
+			<div className={styles.header}>turn={props.data.GetCurrentTurnCount()}</div>
 		</div>
 	);
 }

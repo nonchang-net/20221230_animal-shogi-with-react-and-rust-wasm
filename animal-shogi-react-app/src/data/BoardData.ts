@@ -53,8 +53,6 @@ export class BoardData extends Array<Array<CellData>>{
 		this.tegomaSideA = new Array<Koma>();
 		this.tegomaSideB = new Array<Koma>();
 
-
-		// this.gameData = gameData;
         this.Initialize()
     }
 
@@ -315,7 +313,7 @@ export class BoardData extends Array<Array<CellData>>{
 			if(cuptured.koma === Koma.Niwatori) cuptured.koma = Koma.Hiyoko;
 			this.GetSideTegomas(side).push(cuptured.koma)
 		}
-		
+
 		// 移動先に移動元をコピー
 		this[to.y][to.x] = mover
 

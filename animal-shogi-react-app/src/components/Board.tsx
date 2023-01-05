@@ -23,7 +23,6 @@ export default function Board (props: IProps){
     // セル選択状態state
     const [isSelected, setSelected] = useState(false);
     const [selectedPos, setSelectedPos] = useState(new Position(-1,-1));
-    // const [board, setBoard] = useState(props.data.currentBoardData);
 
     const onCellClicked = (pos:Position)=>{
         // console.log("onClicked() ",pos.x, pos.y, board.Get(pos))
@@ -55,6 +54,7 @@ export default function Board (props: IProps){
                 setSelected(false);
 
                 // TODO: ターン変更
+                props.data.Next()
             }
         }else{
             if(board.IsSelectable(pos)){

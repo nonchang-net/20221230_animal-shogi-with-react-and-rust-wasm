@@ -31,8 +31,14 @@ export class GameData{
 		this.currentBoardData.Evaluate()
     }
 
+	public Next(){
+		this.turn ++ ;
+	}
+
 	public IsHumanIsFirst():boolean{
 		return this.humanIsFirst;
 	}
+
+	public GetCurrentTurnCount(){ return this.turn; }
 
 }
