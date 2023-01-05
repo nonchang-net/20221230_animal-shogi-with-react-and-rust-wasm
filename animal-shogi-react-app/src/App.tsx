@@ -1,4 +1,4 @@
-// import React from 'react';
+import { useState } from 'react';
 import styles from './css/App.module.css';
 
 import Board from './components/Board';
@@ -11,6 +11,8 @@ import {GameData} from './data/GameData'
 export default function App() {
 
 	const gameData = new GameData();
+
+	const [actionCount, setActionCount] = useState(0);
 
 	return (
 		<div className={styles.App}>

@@ -311,8 +311,11 @@ export class BoardData extends Array<Array<CellData>>{
 
 		// 移動先コマがNULLじゃない場合
 		if(cuptured.koma !== Koma.NULL){
-			console.log("TODO: 手駒に移動・ただしNiwatoriはHiyokoとして手駒にすること")
+			// 手駒に移動・ただしNiwatoriはHiyokoとして手駒にする
+			if(cuptured.koma === Koma.Niwatori) cuptured.koma = Koma.Hiyoko;
+			this.GetSideTegomas(side).push(cuptured.koma)
 		}
+		
 		// 移動先に移動元をコピー
 		this[to.y][to.x] = mover
 

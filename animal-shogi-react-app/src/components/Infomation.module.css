@@ -12,6 +12,8 @@
 }
 
 .infomation .motigoma{
+    display: flex;
+    flex-direction: row;
     border : 0.2em solid white;
     border-radius: 1em;
     padding : 0.2em;
