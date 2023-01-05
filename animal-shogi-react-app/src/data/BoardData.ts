@@ -7,19 +7,54 @@
 import {Side, Koma} from './Constants'
 import {CellData} from './CellData'
 import Utils, {Position} from '../Utils'
-import { GameData } from './GameData'
-import Cell from '../components/Cell';
 
+type SideEvaluationInfo = {
+	enableMoves: Array<{from:Position, to:Position}>
+	attackablePositionMap: Array<Array<boolean>>
+}
 export class BoardData extends Array<Array<CellData>>{
 
-	private gameData:GameData;
+	// Side.A|Bそれぞれの盤面評価用情報を保存
+	// undone: Side.A|Bをキーにした連想配列にできないものか？
+	public SideAInfo: SideEvaluationInfo
+	public SideBInfo: SideEvaluationInfo
+	public GetSideInfo(side:Side){
+		switch(side){
+			case Side.A: return this.SideAInfo;
+			case Side.B: return this.SideBInfo;
+			default: throw "undefined side "+side
+		}
+	}
 
-	public Sides:any = {}
+	// Side.A|Bそれぞれの手駒
+	public tegomaSideA: Array<Koma>
+	public tegomaSideB: Array<Koma>
+	public GetSideTegomas(side:Side){
+		switch(side){
+			case Side.A: return this.tegomaSideA;
+			case Side.B: return this.tegomaSideB;
+			default: throw "undefined side "+side
+		}
+	}
+
 	public playerSelectablePositions: Array<Position> = []
 
-    constructor(gameData:GameData){
+    constructor(){
         super()
-		this.gameData = gameData;
+
+		this.SideAInfo = {
+			enableMoves: [],
+			attackablePositionMap: new Array<Array<boolean>>
+		};
+		this.SideBInfo = {
+			enableMoves: [],
+			attackablePositionMap: new Array<Array<boolean>>
+		};
+		this.tegomaSideA = new Array<Koma>();
+		this.tegomaSideB = new Array<Koma>();
+
+
+		// this.gameData = gameData;
         this.Initialize()
     }
 
@@ -152,11 +187,11 @@ export class BoardData extends Array<Array<CellData>>{
 	// - (UI用) プレイヤーの選択可能な駒の一覧を収集
 	public Evaluate(){
 		// TODO: インデックスシグネチャよくわからんので一旦anyな君(´・ω・｀)
-		this.Sides[Side.A] = {
+		this.SideAInfo = {
 			enableMoves: new Array<{from:Position, to:Position}>,
 			attackablePositionMap: this.GetFilledFlagBoard(false)
 		}
-		this.Sides[Side.B] = {
+		this.SideBInfo = {
 			enableMoves: new Array<{from:Position, to:Position}>,
 			attackablePositionMap: this.GetFilledFlagBoard(false)
 		}
@@ -179,7 +214,7 @@ export class BoardData extends Array<Array<CellData>>{
 
 					// メモ: 自分サイドの駒が存在するセルには置けないが、効いている
 					// - なのでここでは、評価Side側の駒が動ける場所は全て無条件でtrueで良い
-					this.Sides[cell.side].attackablePositionMap[targetPos.y][targetPos.x] = true;
+					this.GetSideInfo(cell.side).attackablePositionMap[targetPos.y][targetPos.x] = true;
 				}
 			}
 		})
@@ -203,13 +238,13 @@ export class BoardData extends Array<Array<CellData>>{
 
 					// ライオンは、取られる場所には移動できない
 					if(cell.koma === Koma.Lion &&
-						this.Sides[Utils.ReverseSide(cell.side)].attackablePositionMap[targetPos.y][targetPos.x]){
+						this.GetSideInfo(Utils.ReverseSide(cell.side)).attackablePositionMap[targetPos.y][targetPos.x]){
 						continue;
 					}
 
 					// 以上の判定に引っ掛からなければ、この移動は着手可能手である
 					// console.log("Sides[cell.side]",this.Sides[cell.side],cell.side.toString())
-					this.Sides[cell.side].enableMoves.push({from:pos, to:targetPos})
+					this.GetSideInfo(cell.side).enableMoves.push({from:pos, to:targetPos})
 
 					// Side.Aの場合、プレイヤーの着手可能セル一覧にも保存する
 					if(cell.side === Side.A){
@@ -230,7 +265,7 @@ export class BoardData extends Array<Array<CellData>>{
 			// console.log("enableMove? サイドがAじゃなかった")
 			return false;
 		}
-		for(const move of this.Sides[Side.A].enableMoves as Array<{from:Position, to:Position}>){
+		for(const move of this.GetSideInfo(Side.A).enableMoves as Array<{from:Position, to:Position}>){
 			if(!move){
 				console.error("move is failsy...", move)
 				return false;
@@ -250,7 +285,7 @@ export class BoardData extends Array<Array<CellData>>{
 	// - TODO: これEvaluateで整形しておけばいいんじゃないだろうか
 	public GetMovablesByPos(pos:Position):Array<Position>{
 		let results = new Array<Position>
-		for(const target of this.Sides[Side.A].enableMoves){
+		for(const target of this.GetSideInfo(Side.A).enableMoves){
 			if(target.from.EqualsTo(pos)) results.push(target.to)
 		}
 		return results
