@@ -7,7 +7,7 @@ import styles from './Board.module.css'
 // import {IBoardData} from '../data/BoardData'
 import {GameData} from '../data/GameData'
 import Cell from './Cell'
-import { Side } from '../data/Constants'
+import { Koma, Side } from '../data/Constants'
 
 interface IProps{
 	data: GameData
@@ -40,15 +40,20 @@ export default function Board (props: IProps){
                 setSelected(false);
             }else if(board.IsMovablePos(board.GetMovablesByPos(selectedPos), pos)){
                 // 選択状態から移動可能セルをクリックした → 移動実行
-                // TODO: 成るか否かの選択UI
+
+                // 成るか否か判定
+                let promotion = false;
+                if(pos.y === 0 && board.Get(selectedPos).koma === Koma.Hiyoko){
+                    promotion = window.confirm("成りますか？")
+                }
 
                 // 移動実行
-                board.Move(selectedPos, pos);
+                board.Move(selectedPos, pos, promotion);
 
                 // 選択解除 - ここでboard状態も反映される
                 setSelectedPos(new Position(-1,-1));
                 setSelected(false);
-                
+
                 // TODO: ターン変更
             }
         }else{

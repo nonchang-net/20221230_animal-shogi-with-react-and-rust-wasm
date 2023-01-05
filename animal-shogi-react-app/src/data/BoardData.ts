@@ -266,19 +266,26 @@ export class BoardData extends Array<Array<CellData>>{
 		return false;
 	}
 
-	public Move(from:Position, to:Position){
+	public Move(from:Position, to:Position, promotion:boolean = false){
 		// 移動するセルの情報
 		const mover = this.Get(from);
 		// 移動したSide情報を獲得
 		const side = mover.side;
 		// 移動先のセル状態
 		const cuptured = this.Get(to);
+
 		// 移動先コマがNULLじゃない場合
 		if(cuptured.koma !== Koma.NULL){
-			console.log("TODO: 手駒に移動")
+			console.log("TODO: 手駒に移動・ただしNiwatoriはHiyokoとして手駒にすること")
 		}
 		// 移動先に移動元をコピー
 		this[to.y][to.x] = mover
+
+		// 成るフラグが立っている際は移動先のコマを鶏にする
+		if(promotion){
+			this[to.y][to.x].koma = Koma.Niwatori
+		}
+
 		// 移動元をクリア
 		this[from.y][from.x] = {koma:Koma.NULL, side:Side.Free}
 
