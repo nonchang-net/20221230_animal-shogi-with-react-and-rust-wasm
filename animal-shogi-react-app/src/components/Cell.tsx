@@ -1,10 +1,5 @@
 import styles from './Cell.module.css';
-// import {ICellData, Koma, Side} from './GameView';
-
-import {Position} from '../Utils'
 import {Side, Koma} from '../data/Constants';
-import {CellData} from '../data/CellData';
-import {BoardData} from '../data/BoardData';
 
 interface IProps{
 	selectable: boolean | undefined
@@ -12,8 +7,12 @@ interface IProps{
 	movable: boolean | undefined
 	cellData: CellData
 	cellIndex: {x:number, y:number}
-	boardData: BoardData
 	onClicked: () => void
+}
+
+export type CellData={
+    side: Side;
+    koma: Koma;
 }
 
 export default function Cell (props: IProps){

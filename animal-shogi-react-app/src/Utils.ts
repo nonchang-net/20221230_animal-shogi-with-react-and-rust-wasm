@@ -4,8 +4,6 @@
  * - 状態に依存しないメソッドはクラスに定義せず、単独のユーティリティ関数に分けて分類していく方針
  */
 import { Koma, Side } from "./data/Constants"
-import { BoardData } from "./data/BoardData"
-import { CellData } from "./data/CellData"
 
 // 座標指定クラス
 // - 差分をAddできるようにしたかっただけ。ただのベクトル
@@ -45,6 +43,35 @@ const RandomRange = (max: number):number => {
 	return Math.floor(Math.random()*max)
 }
 
+
+// 仮置き: Koma enumを元にSide.A(下のプレイヤー)視点の移動可能方向セットを返す
+// - ルックアップテーブル書けば済むと思うのだけどインデックスシグネチャ周りで混乱したので一旦switch-caseで雑に定義。。
+// - もっといい書き方あると思うので後で直したい
+const GetKomaMoveRules = (koma:Koma):Array<Position> => {
+    switch(koma){
+        case Koma.Hiyoko:
+            return [new Position(0,-1)]
+        case Koma.Kirin:
+            return [new Position(0,-1),new Position(-1,0),new Position(1,0),new Position(0,1)]
+        case Koma.Lion: return [
+                new Position(-1,-1),new Position(0,-1),new Position(1,-1),
+                new Position(-1,0 ),                   new Position(1,0 ),
+                new Position(-1,1 ),new Position(0,1 ),new Position(1,1 )
+            ]
+        case Koma.Zou:return [
+                new Position(-1,-1),  new Position(1,-1),
+                new Position(-1,1 ),  new Position(1,1 )
+            ]
+        case Koma.Niwatori: return [
+            new Position(-1,-1),new Position(0,-1),new Position(1,-1),
+            new Position(-1,0 ),                   new Position(1,0),
+                                new Position(0,1 ),
+        ]
+        case Koma.NULL:
+            return []
+    }
+}
+
 // Side.A/Bを反転する
 const ReverseSide = (side:Side):Side =>{
 	switch(side){
@@ -54,12 +81,19 @@ const ReverseSide = (side:Side):Side =>{
 	}
 }
 
+// フラグでフィルされた盤面評価用のboolean配列を作成
+const GetFilledFlagBoard = (b:boolean):Array<Array<boolean>> => {
+    return [[b,b,b],[b,b,b],[b,b,b],[b,b,b]];
+}
+
 // 公開メソッド一覧をexport default
 const publics={
 	// privates？ 検討中
 	RandomRange: RandomRange,
 
+	GetKomaMoveRules: GetKomaMoveRules,
 	ReverseSide: ReverseSide,
+	GetFilledFlagBoard: GetFilledFlagBoard,
 
 	// テスト系
 	// TEST_getRandomCell: TEST_getRandomCell,

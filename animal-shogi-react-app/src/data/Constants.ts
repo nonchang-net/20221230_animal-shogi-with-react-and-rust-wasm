@@ -3,6 +3,8 @@
  * - 純粋なenumや定数を置く場所
  */
 
+import { CellData } from "../components/Cell";
+
 // どちらサイドの駒かを判別するenum
 export enum Side{
     Free = 0,
@@ -19,3 +21,58 @@ export const enum Koma{
 	Hiyoko,
 	Niwatori
 }
+
+// 初期の盤面状態
+export const InitialBoardData:Array<Array<CellData>> = [[
+    {
+        side: Side.B,
+        koma: Koma.Kirin
+    },
+    {
+        side: Side.B,
+        koma: Koma.Lion
+    },
+    {
+        side: Side.B,
+        koma: Koma.Zou
+    },
+],[
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+    {
+        side: Side.B,
+        koma: Koma.Hiyoko
+    },
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+],[
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+    {
+        side: Side.A,
+        koma: Koma.Hiyoko
+    },
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+],[
+    {
+        side: Side.A,
+        koma: Koma.Zou
+    },
+    {
+        side: Side.A,
+        koma: Koma.Lion
+    },
+    {
+        side: Side.A,
+        koma: Koma.Kirin
+    },
+]];
