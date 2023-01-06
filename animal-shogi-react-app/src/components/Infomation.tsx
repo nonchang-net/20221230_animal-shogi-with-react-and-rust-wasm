@@ -8,14 +8,16 @@ interface IProps {
 	isTegomaSelected: boolean
 	selectedTegomaIndex: number
 	onTegomaCellClicked: (index:number) => void
+	currentTurn: number
+	currentSide: Side
 }
 
 export default function Infomation(props: IProps) {
 
-	const renderTegomas = (side:Side) => {
+	const renderTegomas = (renderSide:Side) => {
 		let tegomas: Array<Koma>
 
-		if(side == Side.A){
+		if(renderSide == Side.A){
 			tegomas=props.tegomaSideA
 		}else{
 			tegomas=props.tegomaSideB
@@ -27,14 +29,24 @@ export default function Infomation(props: IProps) {
 
         const elements:Array<JSX.Element> = [];
 		for(let i=0; i<tegomas.length ; i++){
+
+			// フラグ評価
+			let selected = renderSide === Side.A
+			let selectable = renderSide === Side.A && props.isTegomaSelected && props.selectedTegomaIndex===i
+			
+			// 自分のターンでない場合は選択状態を解除しておく
+			if(props.currentSide !== Side.A){
+				selected = false
+				selectable = false
+			}
+
 			elements.push(<Cell
 				key={i}
-				selectable={side == Side.A}
-				selected={side == Side.A && props.isTegomaSelected && props.selectedTegomaIndex===i}
-				movable={false}
-				cellData={{ side: side, koma: tegomas[i] }}
+				selectable={selectable}
+				selected={selected}
+				movable={selectable}
+				cellData={{ side: renderSide, koma: tegomas[i] }}
 				cellIndex={{ x: -1, y: -1 }}
-				// boardData={props.data.currentBoardData}
 				onClicked={() => {props.onTegomaCellClicked(i)}} />)
 		}
 		return elements;
@@ -50,7 +62,10 @@ export default function Infomation(props: IProps) {
 			<div className={styles.motigoma}>
 				{renderTegomas(Side.A)}
 			</div>
-			<div className={styles.header}>turn={-1}</div>
+			<div className={styles.header}>
+				turn={props.currentTurn}<br />
+				side={props.currentSide}
+			</div>
 		</div>
 	);
 }

@@ -1,17 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './css/App.module.css';
 
 import Board from './components/Board';
 import Infomation from './components/Infomation';
 
 import { InitialBoardData, Koma, Side } from './data/Constants';
-import { Position } from './Utils';
+import Utils, { Position } from './Utils';
 import { Evaluate } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
 
 
 // UI応答
 export default function App() {
+
+	// const firstSide = window.confirm("先手で始めますか？") ? Side.A : Side.B;
+
+	// 現在のターン数
+	const [currentTurn, setCurrentTurn] = useState(1)
+
+	// 現在のside
+	// TODO: 初期サイドの選択UIをどうしようか
+	const [currentSide, setCurrentSide] = useState(Side.A)
 
     // セル選択状態state
     const [isBoardSelected, setBoardSelected] = useState(false);
@@ -29,9 +38,25 @@ export default function App() {
 	const [tegomaSideA, setTegomaSideA] = useState(new Array<Koma>())
 	const [tegomaSideB, setTegomaSideB] = useState(new Array<Koma>())
 
-	// TODO: 次に以下のuseStateを考えてみる
+	// 手駒状態
 	const [isTegomaSelected, setTegomaSelected] = useState(false)
 	const [selectedTegomaIndex, setSelectedTegomaIndex] = useState(-1)
+
+	// ターンチェンジ副作用検知
+	useEffect(() => {
+		if(currentSide === Side.A){
+			return;
+		}
+
+		// コンピューター側処理実行
+		console.log("Next() : computer turn here.")
+		ComputerTurn();
+
+		console.log("Next() : done. back to player.")
+		setCurrentSide(Side.A)
+		setCurrentTurn(currentTurn + 1)
+		return;
+	});
 
 	// 盤上の駒選択時のステート変更
 	const OnBoardCellClicked = (pos:Position)=>{
@@ -133,7 +158,9 @@ export default function App() {
 		// boardEvaluateDataのstate更新
 		setBoardEvaluateData(Evaluate(boardData))
 	
-		// TODO: 次のターンへ
+		// 次のターンへ
+		// setCurrentSide(Utils.ReverseSide(currentSide))
+		Next()
 	}
 
 	// 手駒配置処理
@@ -159,7 +186,45 @@ export default function App() {
 		setTegomaSelected(false)
 		setSelectedTegomaIndex(-1)
 
-		// TODO: 次のターンへ
+		// 次のターンへ
+		// setCurrentSide(Utils.ReverseSide(currentSide))
+		Next()
+	}
+
+	const Next = ()=>{
+		// console.log("Next() : side=",currentSide)
+
+		// useEffect経由でコンピューターのターンを処理する
+		setCurrentTurn(currentTurn + 1)
+		setCurrentSide(Side.B)
+	}
+
+	// コンピューターの手番処理
+	// - useEffect経由で実行
+	const ComputerTurn = ()=>{
+		// TODO: 本来はAIを呼び出す局面
+		// - boardのEvaluateは終わっているので、試しに着手可能手をランダムに一つ選んで適用していく
+
+		const enableMoves = boardEvaluateData.Side(Side.B).enableMoves;
+
+		// 着手可能手がない場合はパス
+		if(enableMoves.length === 0){
+			Next()
+		}
+
+		// ランダムに着手可能手を盤面から選ぶ
+		const move = enableMoves[Utils.RandomRange(enableMoves.length)]
+
+		// TODO: 「手駒の配置」も着手可能手として評価したい
+
+		// ヒヨコでy=3を選んだ際は、コンピューターは常時promotionする
+		const promotion = (
+			boardData.Get(move.from).koma === Koma.Hiyoko &&
+			move.to.y === 3
+		)
+
+		// 移動実行
+		Move(move.from, move.to, promotion)
 	}
 	
 	return (
@@ -177,6 +242,7 @@ export default function App() {
 						setSelectedBoardPos={setSelectedBoardPos}
 						onCellClicked={OnBoardCellClicked}
 						isTegomaSelected={isTegomaSelected}
+						currentSide={currentSide}
 						/>
 				</div>
 				<div>
@@ -187,6 +253,8 @@ export default function App() {
 						isTegomaSelected={isTegomaSelected}
 						selectedTegomaIndex={selectedTegomaIndex}
 						onTegomaCellClicked={onTegomaCellClicked}
+						currentTurn={currentTurn}
+						currentSide={currentSide}
 						/>
 				</div>
 			</div>

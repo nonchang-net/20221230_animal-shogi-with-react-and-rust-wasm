@@ -17,6 +17,7 @@ interface IProps{
     boardEvaluateData: BoardEvaluateData
     onCellClicked: (pos:Position) => void
     isTegomaSelected: boolean
+    currentSide:Side
 }
 
 
@@ -45,6 +46,14 @@ export default function Board (props: IProps){
                 if(props.isTegomaSelected && cellData.side===Side.Free){
                     movable = true
                 }
+
+                // 自分のターンでない場合は何も選択できない
+                if(props.currentSide !== Side.A){
+                    selectable = false
+                    selected = false
+                    movable = false
+                }
+
                 elements.push(<Cell
                     key={"boardcells_"+x+"_"+y}
                     selectable={selectable}
