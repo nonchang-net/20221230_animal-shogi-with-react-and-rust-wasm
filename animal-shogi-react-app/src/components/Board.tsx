@@ -16,6 +16,7 @@ interface IProps{
     boardData: BoardData
     boardEvaluateData: BoardEvaluateData
     onCellClicked: (pos:Position) => void
+    isTegomaSelected: boolean
 }
 
 
@@ -34,13 +35,22 @@ export default function Board (props: IProps){
                 //     IsMovablePos(selectedCellMovables,selectedPos)
                 // )
                 const pos = new Position(x,y)
+                const cellData = props.boardData.Get(pos);
                 const evaluateData = props.boardEvaluateData.Side(Side.A)
+                let selectable = !props.isBoardSelected && evaluateData.IsSelectable(pos)
+                let selected = props.isBoardSelected && pos.EqualsTo(props.selectedBoardPos)
+                let movable = props.isBoardSelected && evaluateData.IsMovable(props.selectedBoardPos, pos)
+
+                // 手駒選択時のみ空のセル全てをmovableに変更
+                if(props.isTegomaSelected && cellData.side===Side.Free){
+                    movable = true
+                }
                 elements.push(<Cell
                     key={"boardcells_"+x+"_"+y}
-                    selectable={(!props.isBoardSelected && evaluateData.IsSelectable(pos))}
-                    selected={(props.isBoardSelected && pos.EqualsTo(props.selectedBoardPos))}
-                    movable={(props.isBoardSelected && evaluateData.IsMovable(props.selectedBoardPos, pos))}
-                    cellData={props.boardData.Get(new Position(x,y))}
+                    selectable={selectable}
+                    selected={selected}
+                    movable={movable}
+                    cellData={cellData}
                     cellIndex={{x:x, y:y}}
                     onClicked={()=>{props.onCellClicked(pos)}}
                 />);

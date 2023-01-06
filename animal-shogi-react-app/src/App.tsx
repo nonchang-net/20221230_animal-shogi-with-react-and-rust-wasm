@@ -30,8 +30,10 @@ export default function App() {
 	const [tegomaSideB, setTegomaSideB] = useState(new Array<Koma>())
 
 	// TODO: 次に以下のuseStateを考えてみる
-	// const isTegomaSelected
+	const [isTegomaSelected, setTegomaSelected] = useState(false)
+	const [selectedTegomaIndex, setSelectedTegomaIndex] = useState(-1)
 
+	// 盤上の駒選択時のステート変更
 	const OnBoardCellClicked = (pos:Position)=>{
 		// console.log("onClicked() ",pos.x, pos.y, Get(pos))
 		// console.log("onClicked() enableMoves? ", Sides[Side.A].enableMoves)
@@ -39,7 +41,14 @@ export default function App() {
 		
 		// console.log("onClicked() isSelected", isSelected, selectedPos)
 		// console.log("onClicked() GetMovablesByPos()", GetMovablesByPos(pos))
-		
+
+		// 手駒選択時のmovableクリック時は配置してreturn
+		if(isTegomaSelected && boardData.Get(pos).side === Side.Free){
+			SetTegoma(pos)
+			return;
+		}
+
+		// 選択状態による分岐
 		if(isBoardSelected){
 			if(pos.EqualsTo(selectedBoardPos)){
 				// 選択状態から同じセルをクリック → 選択解除
@@ -71,6 +80,20 @@ export default function App() {
 		}
 	}
 
+	// 手駒選択時のステート変更
+	const onTegomaCellClicked = (index:number)=>{
+		// 同じ手駒を選択した際は解除
+		if(isTegomaSelected && selectedTegomaIndex === index){
+			setTegomaSelected(false)
+			return;
+		}
+		setSelectedBoardPos(new Position(-1,-1));
+		setBoardSelected(false);
+		setTegomaSelected(true);
+		setSelectedTegomaIndex(index);
+	}
+
+	// 盤上のコマを移動する
 	const Move = (from:Position, to:Position, promotion:boolean = false) => {
 		let newBoardData = boardData.Clone()
 
@@ -112,6 +135,32 @@ export default function App() {
 	
 		// TODO: 次のターンへ
 	}
+
+	// 手駒配置処理
+	const SetTegoma = (pos:Position):void =>{
+		let newBoardData = boardData.Clone()
+
+		// 手駒の選択インデックスのコマを取得
+		const tegoma = tegomaSideA[selectedTegomaIndex]
+
+		// 指定要素を削除
+		tegomaSideA.splice(selectedTegomaIndex, 1)
+
+		// 盤に配置
+		newBoardData.Set(pos, {koma:tegoma, side:Side.A})
+
+		// hooks経由でstate更新
+		setBoardData(newBoardData)
+
+		// boardEvaluateDataのstate更新
+		setBoardEvaluateData(Evaluate(boardData))
+
+		// 手駒選択状態解除
+		setTegomaSelected(false)
+		setSelectedTegomaIndex(-1)
+
+		// TODO: 次のターンへ
+	}
 	
 	return (
 		<div className={styles.App}>
@@ -127,6 +176,7 @@ export default function App() {
 						selectedBoardPos={selectedBoardPos}
 						setSelectedBoardPos={setSelectedBoardPos}
 						onCellClicked={OnBoardCellClicked}
+						isTegomaSelected={isTegomaSelected}
 						/>
 				</div>
 				<div>
@@ -134,6 +184,9 @@ export default function App() {
 					<Infomation
 						tegomaSideA={tegomaSideA}
 						tegomaSideB={tegomaSideB}
+						isTegomaSelected={isTegomaSelected}
+						selectedTegomaIndex={selectedTegomaIndex}
+						onTegomaCellClicked={onTegomaCellClicked}
 						/>
 				</div>
 			</div>

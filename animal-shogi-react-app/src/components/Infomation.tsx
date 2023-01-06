@@ -5,6 +5,9 @@ import { Side, Koma } from '../data/Constants';
 interface IProps {
 	tegomaSideA: Array<Koma>
 	tegomaSideB: Array<Koma>
+	isTegomaSelected: boolean
+	selectedTegomaIndex: number
+	onTegomaCellClicked: (index:number) => void
 }
 
 export default function Infomation(props: IProps) {
@@ -27,12 +30,12 @@ export default function Infomation(props: IProps) {
 			elements.push(<Cell
 				key={i}
 				selectable={side == Side.A}
-				selected={false}
+				selected={side == Side.A && props.isTegomaSelected && props.selectedTegomaIndex===i}
 				movable={false}
 				cellData={{ side: side, koma: tegomas[i] }}
 				cellIndex={{ x: -1, y: -1 }}
 				// boardData={props.data.currentBoardData}
-				onClicked={() => { }} />)
+				onClicked={() => {props.onTegomaCellClicked(i)}} />)
 		}
 		return elements;
 	}
