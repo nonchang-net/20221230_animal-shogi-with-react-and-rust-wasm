@@ -17,11 +17,14 @@ export class SideEvaluationData {
 	public enableMoves: Array<{from:Position, to:Position}>
 	// 効いている場所の盤面マップ
 	public attackablePositionMap: Array<Array<boolean>>
+	// チェックメイトされているかどうか
+	public isCheckmate: boolean
 
 	constructor(){
-		this.selectablePos= new Array<Position>()
-		this.enableMoves= new Array<{from:Position, to:Position}>()
-		this.attackablePositionMap= Utils.GetFilledFlagBoard(false)
+		this.selectablePos = new Array<Position>()
+		this.enableMoves = new Array<{from:Position, to:Position}>()
+		this.attackablePositionMap = Utils.GetFilledFlagBoard(false)
+		this.isCheckmate = false
 	}
 
 	// fromからtoに移動可能か検索
@@ -65,6 +68,21 @@ export class BoardEvaluateData{
 
 }
 
+
+// sideがチェックメイトされているかどうか
+const IsCheckmate = (
+	side: Side,
+	boardData:BoardData,
+	enemyArrackablePositionMap: Array<Array<boolean>>
+): boolean => {
+	const lionPos = boardData.Search(side, Koma.Lion)
+	// Lionの所在地がattackableならチェックメイト。
+	
+	// console.log(`IsCheckmate: side:${side} isCheckmate:${enemyArrackablePositionMap[lionPos.y][lionPos.x]}: lionPos:`, lionPos, `e_attackages:`, enemyArrackablePositionMap)
+	return enemyArrackablePositionMap[lionPos.y][lionPos.x];
+}
+
+
 // 盤面状態を評価
 // 以下の情報を収集する
 // - Side.A/Bそれぞれの、着手可能手の一覧を収集
@@ -96,35 +114,76 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 		}
 	})
 
-	// 2nd path: 全てのセル状態を評価していく
-	boardData.Each((pos)=>{
-		var cell=boardData.Get(pos)
-		if(cell.side == Side.Free) return;
+	// 2nd pass: チェックメイトされているか格納する
+	evaluateData.Side(Side.A).isCheckmate = IsCheckmate(Side.A, boardData, evaluateData.Side(Side.B).attackablePositionMap)
+	evaluateData.Side(Side.B).isCheckmate = IsCheckmate(Side.B, boardData, evaluateData.Side(Side.A).attackablePositionMap)
+
+	// 3rd path: チェックメイトされている方の局面は、ライオン周辺のみ評価する
+	for(const side of [Side.A, Side.B]){
+		if(evaluateData.Side(side).isCheckmate){
+			// チェックメイトされている場合は、Lionが敵の効いてない場所にしか動けない
+			const lionPos = boardData.Search(side, Koma.Lion)
 			
+			// 着手可能セル一覧は、もはやライオンしかない
+			evaluateData.Side(side).selectablePos.push(lionPos)
+
+			const moveRules = Utils.GetKomaMoveRules(Koma.Lion)
+			for(const rulePos of moveRules){
+	
+				// rulePosを適用した移動先セルを取得
+				const targetPos = lionPos.Add(rulePos, side)
+	
+				// 盤の範囲外は除外
+				if(!targetPos.IsValidIndex()) continue;
+				
+				const targetCell = boardData.Get(targetPos)
+				// 自陣サイドの駒が存在するセルには移動できない
+				if(targetCell.side === side) continue;
+	
+				// 「ライオンが取られない場所」だけを格納する
+				if(! evaluateData.Side(Utils.ReverseSide(side)).attackablePositionMap[targetPos.y][targetPos.x]
+				){
+					// この移動は着手可能手である
+					evaluateData.Side(side).enableMoves.push({from:lionPos, to:targetPos})
+				}
+			}
+		}
+	}
+
+	// 4th path: 全てのセル状態を評価
+	// - チェックメイトされた方は評価済みなので初手でスルーする
+	boardData.Each((pos)=>{
+		const cell=boardData.Get(pos)
+		const side = cell.side;
+		if(side == Side.Free) return;
+
+		// チェックメイトされている方はlionで評価済みなので棄却
+		if(evaluateData.Side(side).isCheckmate) return;
+
 		const moveRules = Utils.GetKomaMoveRules(cell.koma)
 		for(const rulePos of moveRules){
 			// rulePosを適用した移動先セルを取得
-			const targetPos = pos.Add(rulePos, cell.side)
+			const targetPos = pos.Add(rulePos, side)
 
 			// 盤の範囲外は除外
 			if(!targetPos.IsValidIndex()) continue;
 
 			const targetCell = boardData.Get(targetPos)
 			// 自陣サイドの駒が存在するセルには移動できない
-			if(targetCell.side === cell.side) continue;
+			if(targetCell.side === side) continue;
 
 			// ライオンは、取られる場所には移動できない
 			if(cell.koma === Koma.Lion &&
-				evaluateData.Side(Utils.ReverseSide(cell.side)).attackablePositionMap[targetPos.y][targetPos.x]
+				evaluateData.Side(Utils.ReverseSide(side)).attackablePositionMap[targetPos.y][targetPos.x]
 			){
 				continue;
 			}
 
 			// 以上の判定に引っ掛からなければ、この移動は着手可能手である
-			evaluateData.Side(cell.side).enableMoves.push({from:pos, to:targetPos})
+			evaluateData.Side(side).enableMoves.push({from:pos, to:targetPos})
 
 			// 着手可能セル一覧にも保存する
-			evaluateData.Side(cell.side).selectablePos.push(pos)
+			evaluateData.Side(side).selectablePos.push(pos)
 		}
 	})
 

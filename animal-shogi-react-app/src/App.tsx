@@ -13,13 +13,13 @@ import { BoardData } from './data/BoardData';
 // UI応答
 export default function App() {
 
+	// TODO: 初手・後手の選択どうしようか？
 	// const firstSide = window.confirm("先手で始めますか？") ? Side.A : Side.B;
 
 	// 現在のターン数
 	const [currentTurn, setCurrentTurn] = useState(1)
 
 	// 現在のside
-	// TODO: 初期サイドの選択UIをどうしようか
 	const [currentSide, setCurrentSide] = useState(Side.A)
 
     // セル選択状態state
@@ -49,23 +49,14 @@ export default function App() {
 		}
 
 		// コンピューター側処理実行
-		console.log("Next() : computer turn here.")
 		ComputerTurn();
 
-		console.log("Next() : done. back to player.")
 		setCurrentSide(Side.A)
 		setCurrentTurn(currentTurn + 1)
-		return;
 	});
 
 	// 盤上の駒選択時のステート変更
 	const OnBoardCellClicked = (pos:Position)=>{
-		// console.log("onClicked() ",pos.x, pos.y, Get(pos))
-		// console.log("onClicked() enableMoves? ", Sides[Side.A].enableMoves)
-		// console.log("playerSelectablePositions:", playerSelectablePositions)
-		
-		// console.log("onClicked() isSelected", isSelected, selectedPos)
-		// console.log("onClicked() GetMovablesByPos()", GetMovablesByPos(pos))
 
 		// 手駒選択時のmovableクリック時は配置してreturn
 		if(isTegomaSelected && boardData.Get(pos).side === Side.Free){
@@ -159,7 +150,6 @@ export default function App() {
 		setBoardEvaluateData(Evaluate(boardData))
 	
 		// 次のターンへ
-		// setCurrentSide(Utils.ReverseSide(currentSide))
 		Next()
 	}
 
@@ -187,12 +177,11 @@ export default function App() {
 		setSelectedTegomaIndex(-1)
 
 		// 次のターンへ
-		// setCurrentSide(Utils.ReverseSide(currentSide))
 		Next()
 	}
 
 	const Next = ()=>{
-		// console.log("Next() : side=",currentSide)
+		// TODO: ゲームオーバー判定
 
 		// useEffect経由でコンピューターのターンを処理する
 		setCurrentTurn(currentTurn + 1)
