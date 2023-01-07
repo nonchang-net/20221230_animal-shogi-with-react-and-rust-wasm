@@ -9,6 +9,7 @@ header{
   margin-top : 1em ;
 }
 .TurnSelect{
+  text-align : center;
   display : flex;
   flex-direction: column;
   justify-content: center;

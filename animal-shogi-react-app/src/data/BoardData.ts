@@ -7,7 +7,9 @@ export class BoardData{
 	private cells: Array<Array<CellData>>
 
 	constructor(initialBoardData:Array<Array<CellData>>){
-		this.cells = initialBoardData;
+        // deep copy
+        // - JSON経由で手抜き
+		this.cells = JSON.parse(JSON.stringify(initialBoardData));
 	}
 
 	public Clone(){
@@ -33,11 +35,6 @@ export class BoardData{
 		this.cells[pos.y][pos.x] = data
 	}
 
-	public GetMovablesByPos (pos:Position):Array<Position> {
-		// TODO: evaluateDataに格納しておく
-		return [] // TODO
-	}
-
     // サイドと駒種別で検索し、最初に見つかった座標を返す
     // - evaluationData.IsCheckmate専用状態、ライオン検索用
     // - なので見つからなかった場合はthrow
@@ -50,6 +47,20 @@ export class BoardData{
 			}
 		}
         throw new Error(`Search(${koma}) not found...`)
+    }
+
+    // 見つかったnull座標を全て返す
+    // - 一旦ランダムAIのランダム手駒配置用に実装
+    public SearchAllNull():Array<Position> {
+        let results = new Array<Position>
+		for(var y=0 ; y<4 ; y++){
+			for(var x=0 ; x<3 ; x++){
+                const pos = new Position(x,y);
+                const cell = this.Get(pos)
+                if(cell.koma === Koma.NULL) results.push(pos);
+			}
+		}
+        return results;
     }
 
 	// 全てのセルにcallbackを適用する

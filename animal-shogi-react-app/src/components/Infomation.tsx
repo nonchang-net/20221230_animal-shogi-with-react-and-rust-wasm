@@ -26,7 +26,7 @@ export default function Infomation(props: IProps) {
 		}
 
 		if(tegomas.length === 0){
-			return <>手駒がありません。</>;
+			return <>手駒なし</>;
 		}
 
         const elements:Array<JSX.Element> = [];
@@ -57,8 +57,6 @@ export default function Infomation(props: IProps) {
 	const renderStatus = () => {
         const elements:Array<JSX.Element> = [];
 
-		// TODO: コンピューター側ゲームオーバー時はここにプレイヤー勝利の状況を表示したい。currentSideで分岐させる
-
 		const evalData = props.boardEvaluateData.Side(Side.A)
 		switch(evalData.state){
 			case EvaluateState.Playable:
@@ -72,18 +70,6 @@ export default function Infomation(props: IProps) {
 						相手がトライ直前です！
 					</div>)
 				}
-				break;
-			case EvaluateState.GameOverWithCheckmate:
-				elements.push(<div className="notice">
-					チェックメイトを回避する手がありませんでした。
-					コンピューターの勝利です。
-				</div>)
-				break;
-			case EvaluateState.GameOverWithTryable:
-				elements.push(<div className="notice">
-					相手のトライを回避する手がありませんでした。
-					コンピューターの勝利です。
-				</div>)
 				break;
 		}
 		return elements

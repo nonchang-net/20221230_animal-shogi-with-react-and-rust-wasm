@@ -6,7 +6,7 @@ import Infomation from './components/Infomation';
 
 import { InitialBoardData, Koma, Side } from './data/Constants';
 import Utils, { Position } from './Utils';
-import { Evaluate } from './data/BoardEvaluateData';
+import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
 
 
@@ -40,8 +40,6 @@ export default function App() {
 	const [boardEvaluateData, setBoardEvaluateData] = useState(Evaluate(boardData))
 
 	// 手駒状態state
-	// undone: そういえば何も考えずにpushしたら更新されるなこれ？
-	// undone: Side enumで取り分けるメソッドが欲しいかな……
 	const [tegomaSideA, setTegomaSideA] = useState(new Array<Koma>())
 	const [tegomaSideB, setTegomaSideB] = useState(new Array<Koma>())
 
@@ -49,8 +47,37 @@ export default function App() {
 	const [isTegomaSelected, setTegomaSelected] = useState(false)
 	const [selectedTegomaIndex, setSelectedTegomaIndex] = useState(-1)
 
+
+	// 開始時・ゲームオーバー後の再開時ステートリセット
+	const resetGameToPlayable = ()=>{
+		setBoardData(new BoardData(InitialBoardData))
+		setBoardEvaluateData(Evaluate(boardData))
+		setCurrentTurn(1)
+		setGameState(State.Playable)
+		// UI状態クリア
+		setBoardSelected(false)
+		setSelectedBoardPos(new Position(-1, -1))
+		setTegomaSideA(new Array<Koma>())
+		setTegomaSideB(new Array<Koma>())
+		setTegomaSelected(false)
+		setSelectedTegomaIndex(-1)
+		console.log("resetGameToPlayable", boardData, new BoardData(InitialBoardData))
+	}
+
 	// ターンチェンジ副作用検知
 	useEffect(() => {
+
+		console.log("useEffect", boardEvaluateData)
+
+		// ゲームオーバー評価
+		if(
+			boardEvaluateData.Side(Side.A).state !== EvaluateState.Playable || 
+			boardEvaluateData.Side(Side.B).state !== EvaluateState.Playable
+		){
+			setGameState(State.GameOver)
+			return;
+		}
+
 		if(currentSide !== Side.B){
 			return;
 		}
@@ -188,8 +215,6 @@ export default function App() {
 	}
 
 	const Next = ()=>{
-		// TODO: ゲームオーバー判定
-
 		// useEffect経由でコンピューターのターンを処理する
 		setCurrentTurn(currentTurn + 1)
 		setCurrentSide(Side.B)
@@ -201,11 +226,27 @@ export default function App() {
 		// TODO: 本来はAIを呼び出す局面
 		// - boardのEvaluateは終わっているので、試しに着手可能手をランダムに一つ選んで適用していく
 
+		if(tegomaSideB.length !== 0){
+			// 手駒があれば積極的に使う
+			let newBoardData = boardData.Clone()
+			let tegoma = tegomaSideB.pop() as Koma
+			const allPos = boardData.SearchAllNull()
+			const pos = allPos[Utils.RandomRange(allPos.length)]
+			newBoardData.Set(pos, {koma:tegoma, side:Side.B})
+			setBoardData(newBoardData)
+			setBoardEvaluateData(Evaluate(boardData))
+			Next()
+			return;
+		}
+
 		const enableMoves = boardEvaluateData.Side(Side.B).enableMoves;
 
-		// 着手可能手がない場合はパス
+		// ステイルメイト: 着手可能手がない？
+		// - wikipediaによれば、どうぶつしょうぎでチェックメイトされていなくて動ける場所がないという状況は発生しない？
 		if(enableMoves.length === 0){
-			Next()
+			boardEvaluateData.Side(Side.B).state = EvaluateState.GameOverWithCheckmate;
+			setGameState(State.GameOver)
+			return
 		}
 
 		// ランダムに着手可能手を盤面から選ぶ
@@ -225,22 +266,62 @@ export default function App() {
 
 	// 最初の先攻・後攻選択UI
 	const renderTurnSelect = ()=>{
-		return gameState !== State.SelectTurn ? <></> : (<div className={styles.TurnSelect}>
+		return gameState !== State.SelectTurn ? <></> : renderTurnSelectInner()
+	}
+	const renderTurnSelectInner = ()=>{
+		return (<div className={styles.TurnSelect}>
 			<p>先攻・後攻をお選びください。</p>
 			<button onClick={()=>{
 					setCurrentSide(Side.A)
-					setGameState(State.Playable)
+					resetGameToPlayable()
 				}}>先攻で始める</button>
 			<button onClick={()=>{
 					setCurrentSide(Side.B)
-					setGameState(State.Playable)
+					resetGameToPlayable()
 				}}>後攻で始める</button>
 		</div>)
+	}
+
+	// 結果表示
+	const renderGameOver = () =>{
+		if(gameState !== State.GameOver) return <></>
+
+        const elements:Array<JSX.Element> = [];
+		switch(boardEvaluateData.Side(Side.A).state){
+			case EvaluateState.GameOverWithCheckmate:
+				elements.push(<p>
+					チェックメイトを回避する手がありませんでした。
+					コンピューターの勝利です。
+				</p>)
+				break;
+			case EvaluateState.GameOverWithTryable:
+				elements.push(<p>
+					相手のトライを回避する手がありませんでした。
+					コンピューターの勝利です。
+				</p>)
+		}
+		switch(boardEvaluateData.Side(Side.B).state){
+			case EvaluateState.GameOverWithCheckmate:
+				elements.push(<p>
+					チェックメイトを回避する手がありませんでした。
+					あなたの勝利です。
+				</p>)
+				break;
+			case EvaluateState.GameOverWithTryable:
+				elements.push(<p>
+					相手のトライを回避する手がありませんでした。
+					あなたの勝利です。
+				</p>)
+		}
+		elements.push(<p>続けてプレイ:</p>)
+		elements.push(renderTurnSelectInner())
+		return elements
 	}
 	
 	return (
 		<div className={styles.App}>
 			<header>どうぶつしょうぎ</header>
+			{renderTurnSelect()}
 			<div className={styles.GameView}>
 				<div>
 					{/* メインの将棋盤 */}
@@ -270,7 +351,7 @@ export default function App() {
 						/>
 				</div>
 			</div>
-			{renderTurnSelect()}
+			{renderGameOver()}
 		</div>
 	);
 }
