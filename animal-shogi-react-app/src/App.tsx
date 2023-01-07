@@ -314,9 +314,7 @@ export default function App() {
 						boardData={boardData}
 						isBoardSelected={isBoardSelected}
 						boardEvaluateData={boardEvaluateData}
-						setBoardSelected={setBoardSelected}
 						selectedBoardPos={selectedBoardPos}
-						setSelectedBoardPos={setSelectedBoardPos}
 						onCellClicked={OnBoardCellClicked}
 						isTegomaSelected={isTegomaSelected}
 						currentSide={currentSide}

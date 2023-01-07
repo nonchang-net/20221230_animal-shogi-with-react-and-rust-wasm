@@ -10,9 +10,7 @@ import { Side } from '../data/Constants'
 
 interface IProps{
     isBoardSelected: boolean
-    setBoardSelected: (flag:boolean) => void
     selectedBoardPos: Position
-    setSelectedBoardPos: (pos:Position) => void
     boardData: BoardData
     boardEvaluateData: BoardEvaluateData
     onCellClicked: (pos:Position) => void

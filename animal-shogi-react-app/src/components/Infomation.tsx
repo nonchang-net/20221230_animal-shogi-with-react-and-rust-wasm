@@ -33,20 +33,20 @@ export default function Infomation(props: IProps) {
 		for(let i=0; i<tegomas.length ; i++){
 
 			// フラグ評価
-			let selected = renderSide === Side.A
-			let selectable = renderSide === Side.A && props.isTegomaSelected && props.selectedTegomaIndex===i
+			let selectable = renderSide === Side.A
+			let selected = renderSide === Side.A && props.isTegomaSelected && props.selectedTegomaIndex===i
 			
 			// 自分のターンでない場合は選択状態を解除しておく
 			if(props.currentSide !== Side.A){
-				selected = false
 				selectable = false
+				selected = false
 			}
 
 			elements.push(<Cell
 				key={i}
 				selectable={selectable}
 				selected={selected}
-				movable={selectable}
+				movable={false}
 				cellData={{ side: renderSide, koma: tegomas[i] }}
 				cellIndex={{ x: -1, y: -1 }}
 				onClicked={() => {props.onTegomaCellClicked(i)}} />)
@@ -75,6 +75,14 @@ export default function Infomation(props: IProps) {
 		return elements
 	}
 
+	const renderSide = ()=>{
+		switch(props.currentSide){
+			case Side.A: return <p>あなたの番です。</p>
+			case Side.B: return <p>コンピューターの思考中です。</p>
+		}
+		return <></>
+	}
+
 	return (
 		<div className={styles.infomation}>
 			<div>相手の持ち駒</div>
@@ -87,7 +95,7 @@ export default function Infomation(props: IProps) {
 			</div>
 			<div className={styles.header}>
 				turn={props.currentTurn}<br />
-				side={props.currentSide}
+				{renderSide()}
 				{renderStatus()}
 			</div>
 		</div>
