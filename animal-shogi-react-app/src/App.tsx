@@ -18,9 +18,7 @@ enum State {
 
 export default function App() {
 
-	// TODO: 初手・後手の選択どうしようか？
-	// const firstSide = window.confirm("先手で始めますか？") ? Side.A : Side.B;
-
+	// ゲーム状態
 	const [gameState, setGameState] = useState(State.SelectTurn)
 
 	// 現在のターン数
@@ -47,27 +45,39 @@ export default function App() {
 	const [isTegomaSelected, setTegomaSelected] = useState(false)
 	const [selectedTegomaIndex, setSelectedTegomaIndex] = useState(-1)
 
-
 	// 開始時・ゲームオーバー後の再開時ステートリセット
 	const resetGameToPlayable = ()=>{
-		setBoardData(new BoardData(InitialBoardData))
-		setBoardEvaluateData(Evaluate(boardData))
+		const newBoard = new BoardData(InitialBoardData)
+		setBoardData(newBoard)
+		setBoardEvaluateData(Evaluate(newBoard))
 		setCurrentTurn(1)
 		setGameState(State.Playable)
-		// UI状態クリア
-		setBoardSelected(false)
-		setSelectedBoardPos(new Position(-1, -1))
 		setTegomaSideA(new Array<Koma>())
 		setTegomaSideB(new Array<Koma>())
+		ClearUIStates()
+	}
+
+	// UI状態クリア
+	const ClearUIStates = ()=>{
+		setBoardSelected(false)
+		setSelectedBoardPos(new Position(-1, -1))
 		setTegomaSelected(false)
 		setSelectedTegomaIndex(-1)
-		console.log("resetGameToPlayable", boardData, new BoardData(InitialBoardData))
+	}
+
+	// 次のターンへ
+	const NextTurn = (newBoardData:BoardData)=>{
+		ClearUIStates()
+		setCurrentTurn(currentTurn + 1)
+		setCurrentSide(Utils.ReverseSide(currentSide))
+		setBoardData(newBoardData)
+		setBoardEvaluateData(Evaluate(newBoardData))
 	}
 
 	// ターンチェンジ副作用検知
 	useEffect(() => {
 
-		console.log("useEffect", boardEvaluateData)
+		// console.log("useEffect", boardEvaluateData)
 
 		// ゲームオーバー評価
 		if(
@@ -177,14 +187,7 @@ export default function App() {
 		// 移動元をクリア
 		newBoardData.Set(from, {koma:Koma.NULL, side:Side.Free})
 
-		// hooks経由でstate更新
-		setBoardData(newBoardData)
-
-		// boardEvaluateDataのstate更新
-		setBoardEvaluateData(Evaluate(boardData))
-	
-		// 次のターンへ
-		Next()
+		NextTurn(newBoardData)
 	}
 
 	// 手駒配置処理
@@ -200,24 +203,7 @@ export default function App() {
 		// 盤に配置
 		newBoardData.Set(pos, {koma:tegoma, side:Side.A})
 
-		// hooks経由でstate更新
-		setBoardData(newBoardData)
-
-		// boardEvaluateDataのstate更新
-		setBoardEvaluateData(Evaluate(boardData))
-
-		// 手駒選択状態解除
-		setTegomaSelected(false)
-		setSelectedTegomaIndex(-1)
-
-		// 次のターンへ
-		Next()
-	}
-
-	const Next = ()=>{
-		// useEffect経由でコンピューターのターンを処理する
-		setCurrentTurn(currentTurn + 1)
-		setCurrentSide(Side.B)
+		NextTurn(newBoardData)
 	}
 
 	// コンピューターの手番処理
@@ -233,9 +219,8 @@ export default function App() {
 			const allPos = boardData.SearchAllNull()
 			const pos = allPos[Utils.RandomRange(allPos.length)]
 			newBoardData.Set(pos, {koma:tegoma, side:Side.B})
-			setBoardData(newBoardData)
-			setBoardEvaluateData(Evaluate(boardData))
-			Next()
+
+			NextTurn(newBoardData)
 			return;
 		}
 
@@ -243,7 +228,9 @@ export default function App() {
 
 		// ステイルメイト: 着手可能手がない？
 		// - wikipediaによれば、どうぶつしょうぎでチェックメイトされていなくて動ける場所がないという状況は発生しない？
+		// - 
 		if(enableMoves.length === 0){
+			console.error(`ステイルメイト: 最終的にはここには来ないはず？ 一旦ゲームオーバー扱いにします`)
 			boardEvaluateData.Side(Side.B).state = EvaluateState.GameOverWithCheckmate;
 			setGameState(State.GameOver)
 			return
@@ -251,8 +238,6 @@ export default function App() {
 
 		// ランダムに着手可能手を盤面から選ぶ
 		const move = enableMoves[Utils.RandomRange(enableMoves.length)]
-
-		// TODO: 「手駒の配置」も着手可能手として評価したい
 
 		// ヒヨコでy=3を選んだ際は、コンピューターは常時promotionする
 		const promotion = (

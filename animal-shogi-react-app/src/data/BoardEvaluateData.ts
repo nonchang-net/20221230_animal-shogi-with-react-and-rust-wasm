@@ -111,23 +111,9 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 	// 1st pass: attackablePositionMap作成
 	// - 両陣営の「効いている」場所の一覧フラグマップを作成する
-	boardData.Each((pos)=>{
-		var cell=boardData.Get(pos)
-		if(cell.side != Side.Free){
-			const moveRules = Utils.GetKomaMoveRules(cell.koma)
-			for(const rulePos of moveRules){
-				// rulePosを適用した移動先セルを取得
-				const targetPos = pos.Add(rulePos, cell.side)
-
-				// 盤の範囲外は除外
-				if(!targetPos.IsValidIndex()) continue;
-
-				// メモ: 自分サイドの駒が存在するセルには置けないが、効いている
-				// - なのでここでは、評価Side側の駒が動ける場所は全て無条件でtrueで良い
-				evaluateData.Side(cell.side).attackablePositionMap[targetPos.y][targetPos.x] = true;
-			}
-		}
-	})
+	const maps = boardData.GetAttackableMaps();
+	evaluateData.Side(Side.A).attackablePositionMap = maps[0]
+	evaluateData.Side(Side.B).attackablePositionMap = maps[1]
 
 	// 2nd pass: チェックメイトされているか判定、格納
 	// - 1st passの効いてる場所一覧情報を利用
@@ -144,6 +130,16 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 			const lionPos = boardData.Search(side, Koma.Lion)
 			
 			// 着手可能セル一覧は、もはやライオンしかない
+			// TODO: これバグ。ライオンをチェックしている原因となっている駒を攻撃できる駒があればそれも動ける。どう判定しようか。。
+			/**
+			- 1. 自分のライオン以外のenableMovesを検査して、
+			- 2. to先に相手のコマがある場合に、
+				- 2-2. そのコマがなくなった時の相手のattackableMapを再評価して、
+				- 2-3. 自陣のライオンが安全になるなら、
+				- 2-4. そのmoveをenableMovesに追加する
+			*/
+
+			// まずライオンの移動可能場所をenableMovesに入れていく
 			evaluateData.Side(side).selectablePos.push(lionPos)
 
 			const moveRules = Utils.GetKomaMoveRules(Koma.Lion)
