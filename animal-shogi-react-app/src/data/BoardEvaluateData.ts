@@ -3,7 +3,7 @@
  * - BoardDataを渡すとUI/AI処理に必要なBoardEvaluateDataを返すEvaluate()関数を提供
  * - 表現に必要なデータクラスを定義
  */
-
+import { CellData } from "../components/Cell";
 import Utils, { Position } from "../Utils"
 import { BoardData } from "./BoardData"
 import { Koma, Side } from "./Constants"
@@ -126,22 +126,9 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 	// undone: 手番じゃない方を評価する意味はないはず
 	for(const side of [Side.A, Side.B]){
 		if(evaluateData.Side(side).isCheckmate){
-			// チェックメイトされている場合は、Lionが敵の効いてない場所にしか動けない
-			const lionPos = boardData.Search(side, Koma.Lion)
 			
-			// 着手可能セル一覧は、もはやライオンしかない
-			// TODO: これバグ。ライオンをチェックしている原因となっている駒を攻撃できる駒があればそれも動ける。どう判定しようか。。
-			/**
-			- 1. 自分のライオン以外のenableMovesを検査して、
-			- 2. to先に相手のコマがある場合に、
-				- 2-2. そのコマがなくなった時の相手のattackableMapを再評価して、
-				- 2-3. 自陣のライオンが安全になるなら、
-				- 2-4. そのmoveをenableMovesに追加する
-			*/
-
 			// まずライオンの移動可能場所をenableMovesに入れていく
-			evaluateData.Side(side).selectablePos.push(lionPos)
-
+			const lionPos = boardData.Search(side, Koma.Lion)
 			const moveRules = Utils.GetKomaMoveRules(Koma.Lion)
 			for(const rulePos of moveRules){
 	
@@ -160,6 +147,57 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 				){
 					// この移動は着手可能手である
 					evaluateData.Side(side).enableMoves.push({from:lionPos, to:targetPos})
+					// 着手可能セル一覧にも保存する
+					evaluateData.Side(side).selectablePos.push(lionPos)
+				}
+			}
+
+			// チェックメイト回避手を探索
+			// - 1. 自分のライオン以外のenableMovesを検査して、
+			// - 2. to先に相手のコマがある場合に、
+			//	 - 2-2. そのコマがなくなった時の相手のattackableMapを再評価して、
+			//	 - 2-3. 自陣のライオンが安全になるなら、
+			//	 - 2-4. そのmoveをenableMovesに追加する
+			
+			// 自分のライオン以外を精査
+			const allSides = boardData.GetSideAll(side)
+			for(const [cell,pos] of allSides){
+				// ライオンはスキップ
+				if(cell.koma === Koma.Lion) continue;
+				// enableMovesを検査
+				const moveRules = Utils.GetKomaMoveRules(cell.koma)
+				for(const rulePos of moveRules){
+		
+					// rulePosを適用した移動先セルを取得
+					const targetPos = pos.Add(rulePos, side)
+		
+					// 盤の範囲外は除外
+					if(!targetPos.IsValidIndex()) continue;
+					
+					// ルール移動可能先のセル取得
+					const targetCell = boardData.Get(targetPos)
+
+					// 相手サイド
+					const enemySide = Utils.ReverseSide(side)
+
+					// ルール移動先が相手のコマでなければスルー
+					if(targetCell.side !== enemySide) continue;
+
+					// targetCellがいなくなった際の相手のattackableMapを取得
+					const newBoard = boardData.Clone()
+					newBoard.Set(targetPos, {koma:Koma.NULL,side:Side.Free})
+					const maps = newBoard.GetAttackableMaps()
+					const map = side === Side.A ? maps[1] : maps[0]
+
+					// 自陣のライオンが安全になったなら、このmoveはチェックメイト回避手として有効
+					const isLionSafe = !map[lionPos.y][lionPos.x]
+					console.log(`isLionSafe: ${cell.koma} moves. ${pos.x}:${pos.y} to ${targetPos.x}:${targetPos.y} → safe? ${isLionSafe} : ${lionPos.x}:${lionPos.y} `, map)
+					if(isLionSafe){
+						//enableMovesに追加
+						evaluateData.Side(side).enableMoves.push({from:pos, to:targetPos})
+						// 着手可能セル一覧にも保存する
+						evaluateData.Side(side).selectablePos.push(pos)
+					}
 				}
 			}
 

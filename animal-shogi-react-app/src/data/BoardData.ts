@@ -35,6 +35,15 @@ export class BoardData{
 		this.cells[pos.y][pos.x] = data
 	}
 
+	// 全てのセルにcallbackを適用する
+	public Each (callback:(pos:Position)=>void) {
+		for(var y=0 ; y<4 ; y++){
+			for(var x=0 ; x<3 ; x++){
+				callback(new Position(x,y))
+			}
+		}
+	}
+
 	// サイドと駒種別で検索し、最初に見つかった座標を返す
 	// - evaluationData.IsCheckmate専用状態、ライオン検索用
 	// - なので見つからなかった場合はthrow
@@ -61,15 +70,6 @@ export class BoardData{
 			}
 		}
 		return results;
-	}
-
-	// 全てのセルにcallbackを適用する
-	public Each (callback:(pos:Position)=>void) {
-		for(var y=0 ; y<4 ; y++){
-			for(var x=0 ; x<3 ; x++){
-				callback(new Position(x,y))
-			}
-		}
 	}
 
 	// 両陣営の効いてる場所のフラグマップのタプルを作成して返す
@@ -100,6 +100,17 @@ export class BoardData{
 			}
 		})
 		return [sideAMap, sideBMap]
+	}
+
+	// sideのセル情報と位置情報を全部取得
+	// - チェックメイト回避手探索で利用
+	public GetSideAll(side:Side): Array<[cell:CellData,pos:Position]>{
+		let results = new Array<[CellData,Position]>();
+		this.Each((pos)=>{
+			var cell=this.Get(pos);
+			if(cell.side === side) results.push([cell,pos])
+		});
+		return results;
 	}
 
 }
