@@ -10,17 +10,24 @@ import { Evaluate } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
 
 
-// UI応答
+enum State {
+	SelectTurn,
+	Playable,
+	GameOver,
+}
+
 export default function App() {
 
 	// TODO: 初手・後手の選択どうしようか？
 	// const firstSide = window.confirm("先手で始めますか？") ? Side.A : Side.B;
 
+	const [gameState, setGameState] = useState(State.SelectTurn)
+
 	// 現在のターン数
 	const [currentTurn, setCurrentTurn] = useState(1)
 
 	// 現在のside
-	const [currentSide, setCurrentSide] = useState(Side.A)
+	const [currentSide, setCurrentSide] = useState(Side.Free)
 
     // セル選択状態state
     const [isBoardSelected, setBoardSelected] = useState(false);
@@ -44,7 +51,7 @@ export default function App() {
 
 	// ターンチェンジ副作用検知
 	useEffect(() => {
-		if(currentSide === Side.A){
+		if(currentSide !== Side.B){
 			return;
 		}
 
@@ -215,6 +222,21 @@ export default function App() {
 		// 移動実行
 		Move(move.from, move.to, promotion)
 	}
+
+	// 最初の先攻・後攻選択UI
+	const renderTurnSelect = ()=>{
+		return gameState !== State.SelectTurn ? <></> : (<div className={styles.TurnSelect}>
+			<p>先攻・後攻をお選びください。</p>
+			<button onClick={()=>{
+					setCurrentSide(Side.A)
+					setGameState(State.Playable)
+				}}>先攻で始める</button>
+			<button onClick={()=>{
+					setCurrentSide(Side.B)
+					setGameState(State.Playable)
+				}}>後攻で始める</button>
+		</div>)
+	}
 	
 	return (
 		<div className={styles.App}>
@@ -244,9 +266,11 @@ export default function App() {
 						onTegomaCellClicked={onTegomaCellClicked}
 						currentTurn={currentTurn}
 						currentSide={currentSide}
+						boardEvaluateData={boardEvaluateData}
 						/>
 				</div>
 			</div>
+			{renderTurnSelect()}
 		</div>
 	);
 }

@@ -8,10 +8,17 @@ import Utils, { Position } from "../Utils"
 import { BoardData } from "./BoardData"
 import { Koma, Side } from "./Constants"
 
+export enum EvaluateState {
+	Playable, // ゲーム続行可能
+	GameOverWithCheckmate, // 評価ターン側にチェックメイト回避手がない
+	GameOverWithTryable, // 評価ターンの相手側のトライ回避手がない
+}
 
 // サイドごとの評価済み情報をまとめるクラス
 export class SideEvaluationData {
-	// 選択可能なコマ位置の一覧。移動不可能なコマは除く
+	// 評価結果enum
+	public state: EvaluateState
+	// 選択可能なコマ位置の一覧 移動不可能なコマは除く
 	public selectablePos: Array<Position>
 	// 着手可能手の一覧
 	public enableMoves: Array<{from:Position, to:Position}>
@@ -19,12 +26,16 @@ export class SideEvaluationData {
 	public attackablePositionMap: Array<Array<boolean>>
 	// チェックメイトされているかどうか
 	public isCheckmate: boolean
+	// 相手がトライ可能かどうか
+	public isEnemyTryable: boolean
 
 	constructor(){
+		this.state = EvaluateState.Playable
 		this.selectablePos = new Array<Position>()
 		this.enableMoves = new Array<{from:Position, to:Position}>()
 		this.attackablePositionMap = Utils.GetFilledFlagBoard(false)
 		this.isCheckmate = false
+		this.isEnemyTryable = false
 	}
 
 	// fromからtoに移動可能か検索
@@ -77,9 +88,15 @@ const IsCheckmate = (
 ): boolean => {
 	const lionPos = boardData.Search(side, Koma.Lion)
 	// Lionの所在地がattackableならチェックメイト。
-	
+
 	// console.log(`IsCheckmate: side:${side} isCheckmate:${enemyArrackablePositionMap[lionPos.y][lionPos.x]}: lionPos:`, lionPos, `e_attackages:`, enemyArrackablePositionMap)
 	return enemyArrackablePositionMap[lionPos.y][lionPos.x];
+}
+
+// トライ可能なmoveの一覧を取得？
+const GetTryableMoves = {
+	// 案: lionをが最深列の一歩手前にいる際に、最深列の効いていない場所の一覧を出す
+	// これを防げる手がない場合はゲームオーバー？
 }
 
 
@@ -92,10 +109,8 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 	let evaluateData = new BoardEvaluateData()
 
-	// 1st pass:
-	// - 先に「効いている」場所の一覧フラグを更新する
-	// - 次のトラバース段における手判定で、ライオンが効いている場所に移動できないよう判定するため
-	// 全てのセル状態を評価していく
+	// 1st pass: attackablePositionMap作成
+	// - 両陣営の「効いている」場所の一覧フラグマップを作成する
 	boardData.Each((pos)=>{
 		var cell=boardData.Get(pos)
 		if(cell.side != Side.Free){
@@ -114,11 +129,15 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 		}
 	})
 
-	// 2nd pass: チェックメイトされているか格納する
+	// 2nd pass: チェックメイトされているか判定、格納
+	// - 1st passの効いてる場所一覧情報を利用
+	// undone: 手番じゃない方を評価する意味はないはず
 	evaluateData.Side(Side.A).isCheckmate = IsCheckmate(Side.A, boardData, evaluateData.Side(Side.B).attackablePositionMap)
 	evaluateData.Side(Side.B).isCheckmate = IsCheckmate(Side.B, boardData, evaluateData.Side(Side.A).attackablePositionMap)
 
-	// 3rd path: チェックメイトされている方の局面は、ライオン周辺のみ評価する
+	// 3rd path: チェックメイトされている方の着手可能手を評価
+	// - ライオン周辺のみ評価する
+	// undone: 手番じゃない方を評価する意味はないはず
 	for(const side of [Side.A, Side.B]){
 		if(evaluateData.Side(side).isCheckmate){
 			// チェックメイトされている場合は、Lionが敵の効いてない場所にしか動けない
@@ -147,11 +166,17 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 					evaluateData.Side(side).enableMoves.push({from:lionPos, to:targetPos})
 				}
 			}
+
+			// 着手可能手がない場合、チェックメイト回避策がないのでGameOver
+			// undone: 評価サイドのGameOverが決まったら後続の判定は不要
+			if(evaluateData.Side(side).enableMoves.length === 0){
+				evaluateData.Side(side).state = EvaluateState.GameOverWithCheckmate
+			}
 		}
 	}
 
-	// 4th path: 全てのセル状態を評価
-	// - チェックメイトされた方は評価済みなので初手でスルーする
+	// 4th path: 全てのセル状態を評価して着手可能手の一覧を作成
+	// undone: 手番じゃない方を評価する意味はないはず
 	boardData.Each((pos)=>{
 		const cell=boardData.Get(pos)
 		const side = cell.side;
