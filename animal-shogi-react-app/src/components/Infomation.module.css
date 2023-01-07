@@ -15,14 +15,3 @@
     border-radius: 1em;
     padding : 0.2em;
 }
-
-.infomation .header{
-    border-top : 2px solid gray;
-    margin-top : 0.5em;
-    padding-top: 0.5em;
-}
-
-.notice{
-    font-weight: bold;
-    color : red;
-}

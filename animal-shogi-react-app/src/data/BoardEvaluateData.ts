@@ -90,7 +90,9 @@ const IsCheckmate = (
 	const lionPos = boardData.Search(side, Koma.Lion)
 	// Lionの所在地がattackableならチェックメイト。
 
+	// デバッグ
 	// console.log(`IsCheckmate: side:${side} isCheckmate:${enemyArrackablePositionMap[lionPos.y][lionPos.x]}: lionPos:`, lionPos, `e_attackages:`, enemyArrackablePositionMap)
+
 	return enemyArrackablePositionMap[lionPos.y][lionPos.x];
 }
 
@@ -132,19 +134,23 @@ const GetTryablePositions = (
 // - (UI用) プレイヤーの選択可能な駒の一覧を収集
 export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
+	// console.log(`Evaluate()`,boardData)
+
 	let evaluateData = new BoardEvaluateData()
 
 	// 1st pass: attackablePositionMap作成
 	// - 両陣営の「効いている」場所の一覧フラグマップを作成する
-	const maps = boardData.GetAttackableMaps();
-	evaluateData.Side(Side.A).attackablePositionMap = maps[0]
-	evaluateData.Side(Side.B).attackablePositionMap = maps[1]
+	const [sideAMap,sideBMap] = boardData.GetAttackableMaps();
+	evaluateData.Side(Side.A).attackablePositionMap = sideAMap
+	evaluateData.Side(Side.B).attackablePositionMap = sideBMap
 
 	// 2nd pass: チェックメイトされているか判定、格納
 	// - 1st passの効いてる場所一覧情報を利用
 	// undone: 手番じゃない方を評価する意味はないはず
 	evaluateData.Side(Side.A).isCheckmate = IsCheckmate(Side.A, boardData, evaluateData.Side(Side.B).attackablePositionMap)
 	evaluateData.Side(Side.B).isCheckmate = IsCheckmate(Side.B, boardData, evaluateData.Side(Side.A).attackablePositionMap)
+
+	// console.log(`Evaluate() sideMap:`,sideAMap,sideBMap, `isCheckmate:`, evaluateData.Side(Side.A).isCheckmate, evaluateData.Side(Side.B).isCheckmate)
 
 	// 3rd path: チェックメイトされている方の着手可能手を評価
 	// - ライオン周辺のみ評価する
@@ -244,7 +250,7 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 		const side = cell.side;
 		if(side === Side.Free) return;
 
-		// チェックメイトされている方はlionで評価済みなので棄却
+		// チェックメイトされている方は先に評価済みなので棄却
 		if(evaluateData.Side(side).isCheckmate) return;
 
 		const moveRules = Utils.GetKomaMoveRules(cell.koma)
@@ -275,6 +281,7 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 	})
 
 	// 5th pass: トライアブルチェック
+	// undone: これチェックメイト確認前に早期returnできないかな
 	for(const side of [Side.A, Side.B]){
 		// 相手のトライアブル状況を確認
 		const enemySide = Utils.ReverseSide(side);

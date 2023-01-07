@@ -8,6 +8,7 @@ import { InitialBoardData, Koma, Side } from './data/Constants';
 import Utils, { Position } from './Utils';
 import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
+import { AIResults, AIResultsWithNext, DoRandomAI1 } from './ai/AiBase';
 
 
 enum State {
@@ -74,12 +75,15 @@ export default function App() {
 		setCurrentTurn(currentTurn + 1)
 		setCurrentSide(Utils.ReverseSide(currentSide))
 		setBoardData(newBoardData)
-		setBoardEvaluateData(Evaluate(newBoardData))
+		const newBoardEvaluateData = Evaluate(newBoardData)
+		setBoardEvaluateData(newBoardEvaluateData)
+
+		// console.log(`NextTurn(): evaluatedData:`,boardEvaluateData,newBoardEvaluateData,newBoardData)
 
 		// ゲームオーバー評価
 		if(
-			boardEvaluateData.Side(Side.A).state !== EvaluateState.Playable || 
-			boardEvaluateData.Side(Side.B).state !== EvaluateState.Playable
+			newBoardEvaluateData.Side(Side.A).state !== EvaluateState.Playable || 
+			newBoardEvaluateData.Side(Side.B).state !== EvaluateState.Playable
 		){
 			setGameState(State.GameOver)
 			return;
@@ -110,7 +114,15 @@ export default function App() {
 
 		// 手駒選択時のmovableクリック時は配置してreturn
 		if(isTegomaSelected && boardData.Get(pos).side === Side.Free){
-			SetTegoma(pos)
+			let newBoardData = boardData.Clone()
+			// 選択インデックスの手駒を取得
+			const tegoma = tegomaSideA[selectedTegomaIndex]
+			// 指定要素を消費
+			tegomaSideA.splice(selectedTegomaIndex, 1)
+			// 盤に配置
+			newBoardData.Set(pos, {koma:tegoma, side:Side.A})
+			// 次のターンへ
+			NextTurn(newBoardData)
 			return;
 		}
 
@@ -134,8 +146,7 @@ export default function App() {
 				setBoardSelected(false);
 
 				// 移動実行
-				Move(selectedBoardPos, pos, promotion);
-
+				MoveAndNextTurn(selectedBoardPos, pos, promotion);
 			}
 		}else{
 			if(boardEvaluateData.Side(Side.A).IsSelectable(pos)){
@@ -160,7 +171,7 @@ export default function App() {
 	}
 
 	// 盤上のコマを移動する
-	const Move = (from:Position, to:Position, promotion:boolean = false) => {
+	const MoveAndNextTurn = (from:Position, to:Position, promotion:boolean = false) => {
 		let newBoardData = boardData.Clone()
 
 		// 移動するセルの情報
@@ -196,64 +207,44 @@ export default function App() {
 		NextTurn(newBoardData)
 	}
 
-	// 手駒配置処理
-	const SetTegoma = (pos:Position):void =>{
-		let newBoardData = boardData.Clone()
-
-		// 手駒の選択インデックスのコマを取得
-		const tegoma = tegomaSideA[selectedTegomaIndex]
-
-		// 指定要素を削除
-		tegomaSideA.splice(selectedTegomaIndex, 1)
-
-		// 盤に配置
-		newBoardData.Set(pos, {koma:tegoma, side:Side.A})
-
-		NextTurn(newBoardData)
-	}
 
 	// コンピューターの手番処理
 	const ComputerTurn = ()=>{
-		// TODO: 本来はAIを呼び出す局面
-		// - boardのEvaluateは終わっているので、試しに着手可能手をランダムに一つ選んで適用していく
 
-		// console.log(`ComputerTurn() called.`)
+		const result = DoRandomAI1(
+			tegomaSideB,
+			boardData,
+			boardEvaluateData
+		)
 
-		if(tegomaSideB.length !== 0){
-			// 手駒があれば積極的に使う
+		// ゲームオーバー判定が返ってきた
+		if(result.withState){
+			boardEvaluateData.Side(Side.B).state = result.withState
+			setGameState(State.GameOver)
+			return;
+		}
+
+		// 手駒利用コマンドが返ってきた
+		if(result.withPut){
+			const [index,pos] = result.withPut
 			let newBoardData = boardData.Clone()
-			let tegoma = tegomaSideB.pop() as Koma
-			const allPos = boardData.SearchAllNull()
-			const pos = allPos[Utils.RandomRange(allPos.length)]
+			// 選択された手駒取得
+			const tegoma = tegomaSideB[index]
+			// 選択された手駒を削除
+			tegomaSideB.splice(index,1)
+			// 手駒をセット
 			newBoardData.Set(pos, {koma:tegoma, side:Side.B})
-
+			// 次のターンへ
 			NextTurn(newBoardData)
 			return;
 		}
 
-		const enableMoves = boardEvaluateData.Side(Side.B).enableMoves;
-
-		// ステイルメイト: 着手可能手がない？
-		// - wikipediaによれば、どうぶつしょうぎでチェックメイトされていなくて動ける場所がないという状況は発生しない？
-		// - 
-		if(enableMoves.length === 0){
-			console.error(`ステイルメイト: 最終的にはここには来ないはず？ 一旦ゲームオーバー扱いにします`)
-			boardEvaluateData.Side(Side.B).state = EvaluateState.GameOverWithCheckmate;
-			setGameState(State.GameOver)
-			return
+		if(result.withMove){
+			const [from,to,promotion] = result.withMove
+			// 移動実行
+			MoveAndNextTurn(from, to, promotion)
 		}
 
-		// ランダムに着手可能手を盤面から選ぶ
-		const move = enableMoves[Utils.RandomRange(enableMoves.length)]
-
-		// ヒヨコでy=3を選んだ際は、コンピューターは常時promotionする
-		const promotion = (
-			boardData.Get(move.from).koma === Koma.Hiyoko &&
-			move.to.y === 3
-		)
-
-		// 移動実行
-		Move(move.from, move.to, promotion)
 	}
 
 	// 最初の先攻・後攻選択UI
@@ -288,7 +279,7 @@ export default function App() {
 				break;
 			case EvaluateState.GameOverWithTryable:
 				elements.push(<p>
-					相手のトライを回避する手がありませんでした。
+					コンピューターのトライを回避する手がありませんでした。
 					コンピューターの勝利です。
 				</p>)
 				break;
@@ -307,7 +298,7 @@ export default function App() {
 				break;
 			case EvaluateState.GameOverWithTryable:
 				elements.push(<p>
-					相手のトライを回避する手がありませんでした。
+					あなたのトライを回避する手がありませんでした。
 					あなたの勝利です。
 				</p>)
 				break;
@@ -321,6 +312,35 @@ export default function App() {
 		elements.push(<p>続けてプレイ:</p>)
 		elements.push(renderTurnSelectInner())
 		return elements
+	}
+
+	const renderStatus = () => {
+        const elements:Array<JSX.Element> = [];
+
+		const evalData = boardEvaluateData.Side(Side.A)
+		switch(evalData.state){
+			case EvaluateState.Playable:
+				if(evalData.isCheckmate){
+					elements.push(<div className="notice">
+						チェックメイトされています！
+					</div>)
+				}
+				if(evalData.isEnemyTryable){
+					elements.push(<div className="notice">
+						相手がトライ直前です！
+					</div>)
+				}
+				break;
+		}
+		return elements
+	}
+
+	const renderSide = ()=>{
+		switch(currentSide){
+			case Side.A: return <p>あなたの番です。</p>
+			case Side.B: return <p>コンピューターの思考中です。</p>
+		}
+		return <></>
 	}
 	
 	return (
@@ -353,6 +373,11 @@ export default function App() {
 						boardEvaluateData={boardEvaluateData}
 						/>
 				</div>
+			</div>
+			<div className={styles.header}>
+				turn={currentTurn}<br />
+				{renderSide()}
+				{renderStatus()}
 			</div>
 			{renderGameOver()}
 		</div>

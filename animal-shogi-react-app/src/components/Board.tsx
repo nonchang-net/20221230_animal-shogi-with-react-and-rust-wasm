@@ -20,10 +20,11 @@ interface IProps{
 
 export default function Board (props: IProps){
 
-    const renderColumns =(rowIndex:number) => {
+    const renderColumns =() => {
         const elements:Array<JSX.Element> = [];
         // const selectedCellMovables = GetMovablesByPos(selectedPos)
         // console.log("selectedCellMovables",selectedCellMovables)
+
         for(let y=0; y<4 ; y++){
             elements.push(<div>{y+1}</div>)
             for(let x=0; x<3 ; x++){
@@ -32,6 +33,7 @@ export default function Board (props: IProps){
                 //     new Position(x,y).EqualsTo(selectedPos),
                 //     IsMovablePos(selectedCellMovables,selectedPos)
                 // )
+                
                 const pos = new Position(x,y)
                 const cellData = props.boardData.Get(pos);
                 const evaluateData = props.boardEvaluateData.Side(Side.A)
@@ -72,7 +74,7 @@ export default function Board (props: IProps){
                 <div>a</div>
                 <div>b</div>
                 <div>c</div>
-                {renderColumns(0)}
+                {renderColumns()}
             </div>
         </>
 	);

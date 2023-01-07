@@ -17,21 +17,20 @@ export class BoardData{
 	}
 
 	// Positionを元にセル情報を取得
-	// TODO: 最終的にこれ経由でしか取得できないようにして、Array extendsやめようかな
 	public Get (pos:Position):CellData {
 
-		if(!pos.IsValidIndex()){
-			throw new Error(`Get(): not valid. `+pos.x+":"+pos.y)
-		}
+		// if(!pos.IsValidIndex()){
+		// 	throw new Error(`Get(): not valid. `+pos.x+":"+pos.y)
+		// }
 
 		// note: 配列リテラルで書いた時の表現とpositionの直感性がx,y逆なのでここで吸収している。。
 		return this.cells[pos.y][pos.x]
 	}
 
 	public Set (pos:Position, data:CellData){
-		if(!pos.IsValidIndex()){
-			throw new Error(`Set(): not valid. `+pos.x+":"+pos.y)
-		}
+		// if(!pos.IsValidIndex()){
+		// 	throw new Error(`Set(): not valid. `+pos.x+":"+pos.y)
+		// }
 		this.cells[pos.y][pos.x] = data
 	}
 
@@ -90,12 +89,12 @@ export class BoardData{
 				// 盤の範囲外は除外
 				if(!targetPos.IsValidIndex()) continue;
 	
-				// メモ: 自分サイドの駒が存在するセルには置けないが、効いている
-				// - なのでここでは、評価Side側の駒が動ける場所は全て無条件でtrueで良い
 				if(cell.side === Side.A){
 					sideAMap[targetPos.y][targetPos.x] = true;
-				}else{
+				}else if(cell.side === Side.B){
 					sideBMap[targetPos.y][targetPos.x] = true;
+				}else{
+					throw new Error(`undefined index. ${cell.side}`)
 				}
 			}
 		})

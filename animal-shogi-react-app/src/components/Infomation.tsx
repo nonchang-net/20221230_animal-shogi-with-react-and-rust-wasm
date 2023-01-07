@@ -54,35 +54,6 @@ export default function Infomation(props: IProps) {
 		return elements;
 	}
 
-	const renderStatus = () => {
-        const elements:Array<JSX.Element> = [];
-
-		const evalData = props.boardEvaluateData.Side(Side.A)
-		switch(evalData.state){
-			case EvaluateState.Playable:
-				if(evalData.isCheckmate){
-					elements.push(<div className="notice">
-						チェックメイトされています！
-					</div>)
-				}
-				if(evalData.isEnemyTryable){
-					elements.push(<div className="notice">
-						相手がトライ直前です！
-					</div>)
-				}
-				break;
-		}
-		return elements
-	}
-
-	const renderSide = ()=>{
-		switch(props.currentSide){
-			case Side.A: return <p>あなたの番です。</p>
-			case Side.B: return <p>コンピューターの思考中です。</p>
-		}
-		return <></>
-	}
-
 	return (
 		<div className={styles.infomation}>
 			<div>相手の持ち駒</div>
@@ -92,11 +63,6 @@ export default function Infomation(props: IProps) {
 			<div>あなたの持ち駒</div>
 			<div className={styles.motigoma}>
 				{renderTegomas(Side.A)}
-			</div>
-			<div className={styles.header}>
-				turn={props.currentTurn}<br />
-				{renderSide()}
-				{renderStatus()}
 			</div>
 		</div>
 	);
