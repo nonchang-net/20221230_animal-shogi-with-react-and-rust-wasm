@@ -93,11 +93,35 @@ const IsCheckmate = (
 	return enemyArrackablePositionMap[lionPos.y][lionPos.x];
 }
 
-// トライ可能なmoveの一覧を取得？
-// const GetTryableMoves = {
-// 	// 案: lionをが最深列の一歩手前にいる際に、最深列の効いていない場所の一覧を出す
-// 	// これを防げる手がない場合はゲームオーバー？
-// }
+// トライ可能なmoveの一覧を取得
+const GetTryablePositions = (
+	// 評価するサイド
+	side:Side,
+	// 現在の盤面情報
+	boardData:BoardData,
+	// 相手側サイドの効いてる座標一覧
+	enemyArrackablePositionMap: Array<Array<boolean>>
+): Array<Position> => {
+	// 案: lionをが最深列の一歩手前にいる際に、最深列の「効いていない」場所の一覧を出す
+
+	let results = new Array<Position>()
+
+	// lionトライ評価必要かどうか確認
+	const tryableLine = side === Side.A ? 1 : 2;
+	const lionPos = boardData.Search(side, Koma.Lion)
+	if(lionPos.y !== tryableLine) return []
+
+	// トライ成功となるy座標
+	const tryLine = side === Side.A ? 0 : 3;
+
+	// x座標がを確認、安全なら結果に追加
+	for(let x=0 ; x<3 ; x++){
+		if(!enemyArrackablePositionMap[tryLine][x]){
+			results.push(new Position(x,tryLine))
+		}
+	}
+	return results
+}
 
 
 // 盤面状態を評価
@@ -245,6 +269,45 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 			evaluateData.Side(side).selectablePos.push(pos)
 		}
 	})
+
+	// 5th pass: トライアブルチェック
+	for(const side of [Side.A, Side.B]){
+		// 相手のトライアブル状況を確認
+		const enemySide = Utils.ReverseSide(side);
+		const myAttacableMap = evaluateData.Side(side).attackablePositionMap
+		const tryablePositions = GetTryablePositions(enemySide, boardData, myAttacableMap)
+
+		// 相手が2箇所以上トライアブルならトライは防げない
+		if(tryablePositions.length >= 2){
+			evaluateData.Side(side).state = EvaluateState.GameOverWithTryable
+		}
+
+		// 相手が1箇所だけトライアブルなら、そこに対する着手可能手以外は許可できない
+		if(tryablePositions.length === 1){
+			const oldEnableMoves = new Array<{from:Position, to:Position}>()
+			// clone
+			for(const move of evaluateData.Side(side).enableMoves){
+				oldEnableMoves.push(move)
+			}
+			// enableMoves取り上げ
+			evaluateData.Side(side).enableMoves = []
+			evaluateData.Side(side).selectablePos = []
+
+			for(const move of oldEnableMoves){
+				if(move.to.EqualsTo(tryablePositions[0])){
+					// 見つかったので移動可能
+					evaluateData.Side(side).enableMoves.push(move)
+					evaluateData.Side(side).selectablePos.push(move.to)
+				}
+			}
+
+			// 見つからなかったらトライは防げない
+			if(evaluateData.Side(side).enableMoves.length === 0){
+				evaluateData.Side(side).state = EvaluateState.GameOverWithTryable
+			}
+		}
+	}
+
 
 	return evaluateData;
 
