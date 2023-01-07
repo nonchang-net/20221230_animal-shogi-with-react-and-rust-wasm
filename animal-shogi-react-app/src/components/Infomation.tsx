@@ -19,7 +19,7 @@ export default function Infomation(props: IProps) {
 	const renderTegomas = (renderSide:Side) => {
 		let tegomas: Array<Koma>
 
-		if(renderSide == Side.A){
+		if(renderSide === Side.A){
 			tegomas=props.tegomaSideA
 		}else{
 			tegomas=props.tegomaSideB

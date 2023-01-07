@@ -67,17 +67,14 @@ export default function App() {
 
 	// 次のターンへ
 	const NextTurn = (newBoardData:BoardData)=>{
+		
+		// console.log(`NextTurn() called.`)
+
 		ClearUIStates()
 		setCurrentTurn(currentTurn + 1)
 		setCurrentSide(Utils.ReverseSide(currentSide))
 		setBoardData(newBoardData)
 		setBoardEvaluateData(Evaluate(newBoardData))
-	}
-
-	// ターンチェンジ副作用検知
-	useEffect(() => {
-
-		// console.log("useEffect", boardEvaluateData)
 
 		// ゲームオーバー評価
 		if(
@@ -87,17 +84,18 @@ export default function App() {
 			setGameState(State.GameOver)
 			return;
 		}
+	}
 
-		if(currentSide !== Side.B){
-			return;
+	// currentSide stateが更新されたらコンピューター思考開始
+	// TODO: warning出ているので正しい使い方じゃなさそう。ただ、NextTurnでそのままコンピューターに渡すとcurrentSideが更新されないのでどう書けばいいのかな、ってなってる
+	useEffect(()=>{
+		// console.log(`useEffect(): currenSide changed. ${currentSide.toString()}`)
+
+		if(currentSide === Side.B){
+			// コンピューター側処理実行
+			ComputerTurn();
 		}
-
-		// コンピューター側処理実行
-		ComputerTurn();
-
-		setCurrentSide(Side.A)
-		setCurrentTurn(currentTurn + 1)
-	});
+	},[currentSide])
 
 	// 盤上の駒選択時のステート変更
 	const OnBoardCellClicked = (pos:Position)=>{
@@ -169,7 +167,7 @@ export default function App() {
 			// 手駒に移動・ただしNiwatoriはHiyokoとして手駒にする
 			if(cuptured.koma === Koma.Niwatori) cuptured.koma = Koma.Hiyoko;
 
-			if(side == Side.A){
+			if(side === Side.A){
 				tegomaSideA.push(cuptured.koma)
 			}else{
 				tegomaSideB.push(cuptured.koma)
@@ -207,10 +205,11 @@ export default function App() {
 	}
 
 	// コンピューターの手番処理
-	// - useEffect経由で実行
 	const ComputerTurn = ()=>{
 		// TODO: 本来はAIを呼び出す局面
 		// - boardのEvaluateは終わっているので、試しに着手可能手をランダムに一つ選んで適用していく
+
+		// console.log(`ComputerTurn() called.`)
 
 		if(tegomaSideB.length !== 0){
 			// 手駒があれば積極的に使う

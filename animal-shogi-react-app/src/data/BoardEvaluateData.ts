@@ -73,8 +73,8 @@ export class BoardEvaluateData{
 		switch(side){
 			case Side.A: return this.SideAInfo;
 			case Side.B: return this.SideBInfo;
-			default: throw "undefined side "+side
 		}
+		throw new Error("undefined side "+side.toString())
 	}
 
 }
@@ -94,10 +94,10 @@ const IsCheckmate = (
 }
 
 // トライ可能なmoveの一覧を取得？
-const GetTryableMoves = {
-	// 案: lionをが最深列の一歩手前にいる際に、最深列の効いていない場所の一覧を出す
-	// これを防げる手がない場合はゲームオーバー？
-}
+// const GetTryableMoves = {
+// 	// 案: lionをが最深列の一歩手前にいる際に、最深列の効いていない場所の一覧を出す
+// 	// これを防げる手がない場合はゲームオーバー？
+// }
 
 
 // 盤面状態を評価
@@ -176,7 +176,7 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 	boardData.Each((pos)=>{
 		const cell=boardData.Get(pos)
 		const side = cell.side;
-		if(side == Side.Free) return;
+		if(side === Side.Free) return;
 
 		// チェックメイトされている方はlionで評価済みなので棄却
 		if(evaluateData.Side(side).isCheckmate) return;

@@ -52,7 +52,7 @@ export class BoardData{
 	// 見つかったnull座標を全て返す
 	// - 一旦ランダムAIのランダム手駒配置用に実装
 	public SearchAllNull():Array<Position> {
-		let results = new Array<Position>
+		let results = new Array<Position>()
 		for(var y=0 ; y<4 ; y++){
 			for(var x=0 ; x<3 ; x++){
 				const pos = new Position(x,y);

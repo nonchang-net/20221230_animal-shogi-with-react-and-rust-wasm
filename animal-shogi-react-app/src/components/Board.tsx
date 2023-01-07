@@ -1,5 +1,4 @@
-import {useState} from 'react'
-import Utils, { Position } from '../Utils'
+import { Position } from '../Utils'
 
 import styles from './Board.module.css'
 
