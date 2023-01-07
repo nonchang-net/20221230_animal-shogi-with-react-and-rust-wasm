@@ -12,6 +12,7 @@ export enum EvaluateState {
 	Playable, // ゲーム続行可能
 	GameOverWithCheckmate, // 評価ターン側にチェックメイト回避手がない
 	GameOverWithTryable, // 評価ターンの相手側のトライ回避手がない
+	GameOverWithStalemate, // ステイルメイト=生き残れる合法手が一つもない （※wikipediaによるとこうなる可能性はないはずなのだけど、このゲームではトライアブル評価をしているので発生しうる。合法手が全てトライアブル失敗というパターン）
 }
 
 // サイドごとの評価済み情報をまとめるクラス
@@ -215,7 +216,10 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 					// 自陣のライオンが安全になったなら、このmoveはチェックメイト回避手として有効
 					const isLionSafe = !map[lionPos.y][lionPos.x]
-					console.log(`isLionSafe: ${cell.koma} moves. ${pos.x}:${pos.y} to ${targetPos.x}:${targetPos.y} → safe? ${isLionSafe} : ${lionPos.x}:${lionPos.y} `, map)
+
+					// デバッグ
+					// console.log(`isLionSafe: ${cell.koma} moves. ${pos.x}:${pos.y} to ${targetPos.x}:${targetPos.y} → safe? ${isLionSafe} : ${lionPos.x}:${lionPos.y} `, map)
+
 					if(isLionSafe){
 						//enableMovesに追加
 						evaluateData.Side(side).enableMoves.push({from:pos, to:targetPos})
@@ -308,6 +312,14 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 		}
 	}
 
+	// pass 6: playableなのにenableMoveがない場合はステイルメイト
+	// ※どうぶつしょうぎにおいては「トライ失敗する手しか残っていない」場合に発生する。チェスにおける本来のステイルメイトは存在しない
+	for(const side of [Side.A, Side.B]){
+		if(evaluateData.Side(side).enableMoves.length === 0 &&
+		evaluateData.Side(side).state === EvaluateState.Playable){
+			evaluateData.Side(side).state = EvaluateState.GameOverWithStalemate
+		}
+	}
 
 	return evaluateData;
 

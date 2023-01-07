@@ -88,12 +88,20 @@ export default function App() {
 
 	// currentSide stateが更新されたらコンピューター思考開始
 	// TODO: warning出ているので正しい使い方じゃなさそう。ただ、NextTurnでそのままコンピューターに渡すとcurrentSideが更新されないのでどう書けばいいのかな、ってなってる
+	// React Hook useEffect has a missing dependency: 'ComputerTurn'. Either include it or remove the dependency array
 	useEffect(()=>{
 		// console.log(`useEffect(): currenSide changed. ${currentSide.toString()}`)
 
 		if(currentSide === Side.B){
 			// コンピューター側処理実行
-			ComputerTurn();
+			// ComputerTurn();
+			setTimeout(()=>{
+				// console.log(`settimeout called. ${currentSide}`)
+				if(currentSide === Side.B){
+					// コンピューター側処理実行
+					ComputerTurn();
+				}
+			},300)
 		}
 	},[currentSide])
 
@@ -283,6 +291,12 @@ export default function App() {
 					相手のトライを回避する手がありませんでした。
 					コンピューターの勝利です。
 				</p>)
+				break;
+			case EvaluateState.GameOverWithStalemate:
+				elements.push(<p>
+					トライ失敗の手しか残っていませんでした。
+					コンピューターの勝利です。
+				</p>)
 		}
 		switch(boardEvaluateData.Side(Side.B).state){
 			case EvaluateState.GameOverWithCheckmate:
@@ -296,6 +310,13 @@ export default function App() {
 					相手のトライを回避する手がありませんでした。
 					あなたの勝利です。
 				</p>)
+				break;
+			case EvaluateState.GameOverWithStalemate:
+				elements.push(<p>
+					トライ失敗の手しか残っていませんでした。
+					あなたの勝利です。
+				</p>)
+
 		}
 		elements.push(<p>続けてプレイ:</p>)
 		elements.push(renderTurnSelectInner())
