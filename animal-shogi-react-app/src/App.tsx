@@ -8,7 +8,7 @@ import { Debug_InitialBoardData_FastFinish, InitialBoardData, Koma, Side } from 
 import Utils, { Position } from './Utils';
 import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
-import { AIResults, DoRandomAI1 } from './ai/AiBase';
+import { AIResults, DoRandomAI1, DoRandomAI1WithMultipleSequence } from './ai/AiBase';
 
 
 enum State {
@@ -216,27 +216,38 @@ export default function App() {
 
 	// コンピューターの手番処理
 	const ComputerTurn = ()=>{
+		// 再帰呼び出し
+		// - 一発で結果が返ってくれば一撃で完了する
+		const recursiveCall = (result:AIResults)=>{
+			if(result.withNext){
+				const [current,total,count,Next] = result.withNext;
+				// console.log(`withNext() ${current}/${total} (${count})`)
+				setTimeout(()=>{
+					// ちょっとUI側で待機してから再実行する
+					recursiveCall(Next())
+				},10)
+			}else{
+				ComputerTurnWithResult(result)
+			}
+		}
 
-		const result = DoRandomAI1(
-			tegomaSideB,
-			boardData,
-			boardEvaluateData
-		)
-
-		// const result = DoRandomAI1With3Sequence(
+		// テスト1: 一瞬で応答を返すランダムAI
+		// recursiveCall(DoRandomAI1(
 		// 	tegomaSideB,
 		// 	boardData,
 		// 	boardEvaluateData
-		// )
+		// ));
 
-		// // 未完了情報が返ってきた
-		// if(result.withNext){
-		// 	setTimeout(()=>{
-		// 		// ちょっとUI側で待機してから再実行する
-		// 		result.withNext()
-		// 	},300)
-		// 	return;
-		// }
+		// テスト2: 10回進捗情報を返してから完了応答を返すランダムAI
+		recursiveCall(DoRandomAI1WithMultipleSequence(
+			tegomaSideB,
+			boardData,
+			boardEvaluateData
+		));
+	}
+
+	// コンピューターの処理: 最終的にAIが結果を返したら
+	const ComputerTurnWithResult = (result:AIResults)=>{
 
 		// ゲームオーバー判定が返ってきた
 		if(result.withState){

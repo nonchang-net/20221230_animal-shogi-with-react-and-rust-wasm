@@ -28,7 +28,7 @@ import Utils, { Position } from '../Utils';
  */
 export class AIResults{
 	// 完了してない時の応答
-	public withNext?: (current:number, total:number, count:number) => AIResults
+	public withNext?: [current:number, total:number, count:number, Next:()=>AIResults]
 	// 駒移動の応答
 	public withMove?: [Position, Position, boolean]
 	// 手駒配置の応答
@@ -96,31 +96,39 @@ export const DoRandomAI1 = (
 
 }
 
-// ランダム手を指すAIを、無駄に3回待たせて分割で返すAI
+// ランダム手を指すAIを、複数回の継続情報に分けて返すサンプル
+export const DoRandomAI1WithMultipleSequence = (
+	tegomas:Array<Koma>,
+	boardData:BoardData,
+	boardEvaluateData:BoardEvaluateData
+): AIResults => {
 
+	// クロージャで進捗情報を保持
+	const total = 10;
+	let progress = 1;
 
-// export const DoRandomAI1With3Sequence = (
-// 	tegomas:Array<Koma>,
-// 	boardData:BoardData,
-// 	boardEvaluateData:BoardEvaluateData
-// ): AIResults => {
+	// 中断情報を返すコールバックサンプル
+	const recursiveEvaluation = ():AIResults => {
+		progress ++;
+		if(progress >= total){
+			// 最終的にここで結果が帰る
+			return DoRandomAI1(tegomas, boardData, boardEvaluateData)
+		}
+		// 未完了ならコールバックを返す
+		return continuasExecute()
+	}
 
-// 	//public withNext?: [number, number, number, ()=>AIResults]
+	// 未完了時応答
+	const continuasExecute = ():AIResults =>{
+		// 継続処理を呼び出し元に返す
+		const result = new AIResults()
+		result.withNext = [
+			progress, total, -1, ()=>{return recursiveEvaluation()}
+		]
+		return result;
+	}
 
-// 	// const total = 10;
-// 	// let progress = 1;
-// 	// const next = ():AIResults => {
-// 	// 	progress ++;
-// 	// 	if(progress >= total){
-// 	// 		return DoRandomAI1(tegomas, boardData, boardEvaluateData)
-// 	// 	}
-// 	// 	return next(progress, total, -1)
-// 	// }
+	// 初回処理
+	return continuasExecute();
 
-// 	// とりあえず次に呼べば結果が返ってくるやつを返す
-// 	const result = new AIResults()
-// 	result.withNext = () => {
-// 		return DoRandomAI1With3Sequence(tegomas, boardData, boardEvaluateData)
-// 	}
-// 	return result
-// }
+}
