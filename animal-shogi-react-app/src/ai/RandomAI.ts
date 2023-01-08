@@ -1,22 +1,8 @@
 import { BoardData } from '../data/BoardData';
 import { BoardEvaluateData, EvaluateState } from '../data/BoardEvaluateData'
 import { Koma, Side } from '../data/Constants'
-import Utils, { Position } from '../Utils';
-
-/**
- * type AIResults
- * - AIの返却型
- */
-export class AIResults{
-	// 完了してない時の応答
-	public withNext?: [current:number, total:number, count:number, Next:()=>AIResults]
-	// 駒移動の応答
-	public withMove?: [Position, Position, boolean]
-	// 手駒配置の応答
-	public withPut?: [number, Position]
-	// ゲームオーバーだった応答
-	public withState?: EvaluateState
-}
+import Utils from '../Utils';
+import { AIResult } from './AIResult';
 
 
 // ランダムに手を返すAI
@@ -25,7 +11,7 @@ export const DoRandomAI1 = (
 	tegomas:Array<Koma>,
 	boardData:BoardData,
 	boardEvaluateData:BoardEvaluateData
-): AIResults => {
+): AIResult => {
 
 	// console.log(`RandomAI1() called.`)
 
@@ -45,7 +31,7 @@ export const DoRandomAI1 = (
 		// newBoardData.Set(pos, {koma:tegoma, side:Side.B})
 		// NextTurn(newBoardData)
 
-		const result = new AIResults()
+		const result = new AIResult()
 		result.withPut = [0, pos]
 		return result
 	}
@@ -57,7 +43,7 @@ export const DoRandomAI1 = (
 	// - 
 	if(enableMoves.length === 0){
 		console.error(`ステイルメイト: 最終的にはここには来ないはず？ 一旦ゲームオーバー扱いにします`)
-		const result = new AIResults()
+		const result = new AIResult()
 		result.withState = EvaluateState.GameOverWithCheckmate
 		return result
 	}
@@ -72,7 +58,7 @@ export const DoRandomAI1 = (
 	)
 
 	// 移動実行
-	const result = new AIResults()
+	const result = new AIResult()
 	result.withMove = [move.from, move.to, promotion]
 	return result
 
@@ -83,14 +69,14 @@ export const DoRandomAI1WithMultipleSequence = (
 	tegomas:Array<Koma>,
 	boardData:BoardData,
 	boardEvaluateData:BoardEvaluateData
-): AIResults => {
+): AIResult => {
 
 	// クロージャで進捗情報を保持
 	const total = 10;
 	let progress = 1;
 
 	// 中断情報を返すコールバックサンプル
-	const recursiveEvaluation = ():AIResults => {
+	const recursiveEvaluation = ():AIResult => {
 		progress ++;
 		if(progress >= total){
 			// 最終的にここで結果が帰る
@@ -101,9 +87,9 @@ export const DoRandomAI1WithMultipleSequence = (
 	}
 
 	// 未完了時応答
-	const continuasExecute = ():AIResults =>{
+	const continuasExecute = ():AIResult =>{
 		// 継続処理を呼び出し元に返す
-		const result = new AIResults()
+		const result = new AIResult()
 		result.withNext = [
 			progress, total, -1, ()=>{return recursiveEvaluation()}
 		]

@@ -1,4 +1,4 @@
-import styles from './Infomation.module.css';
+import styles from './Captures.module.css';
 import Cell from './Cell';
 import { Side, Koma } from '../data/Constants';
 import { BoardEvaluateData, EvaluateState } from '../data/BoardEvaluateData';

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import styles from './css/App.module.css';
 
 import Board from './components/Board';
-import Infomation from './components/Infomation';
+import Infomation from './components/Captures';
 
 import { Debug_InitialBoardData_FastFinish, InitialBoardData, Koma, Side } from './data/Constants';
 import Utils, { Position } from './Utils';
 import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
-import { AIResults, DoRandomAI1, DoRandomAI1WithMultipleSequence } from './ai/AiBase';
+import { AIResult} from './ai/AIResult';
+import { DoRandomAI1, DoRandomAI1WithMultipleSequence } from './ai/RandomAI';
 
 
 enum State {
@@ -226,7 +227,7 @@ export default function App() {
 		// 再帰呼び出し
 		// - 一発で結果が返ってくれば一撃で完了する
 
-		const recursiveCall = (result:AIResults)=>{
+		const recursiveCall = (result:AIResult)=>{
 			if(result.withNext){
 				if(!isComputing){
 					setComputing(true)
@@ -241,7 +242,7 @@ export default function App() {
 				setTimeout(()=>{
 					// ちょっとUI側で待機してから再実行する
 					recursiveCall(Next())
-				},100)
+				},10)
 			}else{
 				// setComputing(false) // 結果は表示し続けるためコメントアウト中
 
@@ -271,7 +272,7 @@ export default function App() {
 	}
 
 	// コンピューターの処理: 最終的にAIが結果を返したら
-	const ComputerTurnWithResult = (result:AIResults)=>{
+	const ComputerTurnWithResult = (result:AIResult)=>{
 
 		// ゲームオーバー判定が返ってきた
 		if(result.withState){
