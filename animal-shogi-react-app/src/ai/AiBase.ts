@@ -1,22 +1,3 @@
-/**
- * AI規定クラス
- * - AIはboardDataとコールバック二手を受け取って、評価して以下の情報を返す。
- *  - 1. NextCallback()と中断状態を返す
- *      - 計算途中で進捗状態を返す目的
- *      - 進捗状況を{current:number, total:number, count:number}で返す。
- *          - current: 現在の進捗状況
- *          - total: AIごとの完了目標工数
- *          - count: AIの局面評価累計数などの追加情報
- *  - 2. 完了状態を返す
- *      - 最終的にAIが選んだ手を返す。
- *      - 手は以下のどちらかの型。
- *          - 2.a: {from:Position, to:Position, promotion:boolean}
- *              - どのコマをどこに移動するのか、成るかどうかをpromotionで指定
- *          - 2.b: {index:number, to:Position}
- * 				- indexの手駒を番に配置する
- */
-
-
 import { BoardData } from '../data/BoardData';
 import { BoardEvaluateData, EvaluateState } from '../data/BoardEvaluateData'
 import { Koma, Side } from '../data/Constants'
@@ -39,6 +20,7 @@ export class AIResults{
 
 
 // ランダムに手を返すAI
+// - UI用にチェックメイト回避、トライアブル回避手に絞り込んでいることもあり、何気にプレイアブル
 export const DoRandomAI1 = (
 	tegomas:Array<Koma>,
 	boardData:BoardData,

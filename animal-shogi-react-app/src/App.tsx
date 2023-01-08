@@ -213,32 +213,56 @@ export default function App() {
 		NextTurn(newBoardData)
 	}
 
+	// コンピューター計算中かどうか
+	const [isComputing, setComputing] = useState(false)
+	const [computingProcess, setComputingProcess] = useState(0)
+	const [computingTotal, setComputingTotal] = useState(0)
+	const [computingCount, setComputingCount] = useState(0)
+	const [computingStartTime, setComputingStartTime] = useState(Date.now)
+	const [computingTime, setComputingTime] = useState(Date.now)
 
 	// コンピューターの手番処理
 	const ComputerTurn = ()=>{
 		// 再帰呼び出し
 		// - 一発で結果が返ってくれば一撃で完了する
+
 		const recursiveCall = (result:AIResults)=>{
 			if(result.withNext){
+				if(!isComputing){
+					setComputing(true)
+					setComputingStartTime(Date.now)
+				}
 				const [current,total,count,Next] = result.withNext;
+				setComputingProcess(current)
+				setComputingTotal(total)
+				setComputingCount(count)
+				setComputingTime(Date.now() - computingStartTime);
 				// console.log(`withNext() ${current}/${total} (${count})`)
 				setTimeout(()=>{
 					// ちょっとUI側で待機してから再実行する
 					recursiveCall(Next())
-				},10)
+				},100)
 			}else{
+				// setComputing(false) // 結果は表示し続けるためコメントアウト中
+
+				// 完了表示にする
+				setComputingProcess(computingTotal)
+				setComputingTime(Date.now() - computingStartTime);
+
+				// AI結果を適用
 				ComputerTurnWithResult(result)
 			}
 		}
 
-		// テスト1: 一瞬で応答を返すランダムAI
+		// AI実行: テスト1: 一瞬で応答を返すランダムAI
 		// recursiveCall(DoRandomAI1(
 		// 	tegomaSideB,
 		// 	boardData,
 		// 	boardEvaluateData
 		// ));
 
-		// テスト2: 10回進捗情報を返してから完了応答を返すランダムAI
+		// AI実行: テスト2: 10回進捗情報を返してから完了応答を返すランダムAI
+		setComputingStartTime(Date.now)
 		recursiveCall(DoRandomAI1WithMultipleSequence(
 			tegomaSideB,
 			boardData,
@@ -364,6 +388,9 @@ export default function App() {
 					</div>)
 				}
 				break;
+		}
+		if(isComputing){
+			elements.push(<div>CPU: {computingProcess}/{computingTotal} ({computingCount}) 経過時間: {computingTime}ms</div>)
 		}
 		return elements
 	}
