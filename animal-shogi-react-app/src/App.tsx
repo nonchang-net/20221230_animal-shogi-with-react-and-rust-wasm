@@ -4,11 +4,11 @@ import styles from './css/App.module.css';
 import Board from './components/Board';
 import Infomation from './components/Infomation';
 
-import { InitialBoardData, Koma, Side } from './data/Constants';
+import { Debug_InitialBoardData_FastFinish, InitialBoardData, Koma, Side } from './data/Constants';
 import Utils, { Position } from './Utils';
 import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
-import { AIResults, AIResultsWithNext, DoRandomAI1 } from './ai/AiBase';
+import { AIResults, DoRandomAI1 } from './ai/AiBase';
 
 
 enum State {
@@ -48,7 +48,12 @@ export default function App() {
 
 	// 開始時・ゲームオーバー後の再開時ステートリセット
 	const resetGameToPlayable = ()=>{
+		// 通常の盤面
 		const newBoard = new BoardData(InitialBoardData)
+
+		// デバッグ盤面: サクッと負かす用
+		// const newBoard = new BoardData(Debug_InitialBoardData_FastFinish)
+
 		setBoardData(newBoard)
 		setBoardEvaluateData(Evaluate(newBoard))
 		setCurrentTurn(1)
@@ -85,6 +90,7 @@ export default function App() {
 			newBoardEvaluateData.Side(Side.A).state !== EvaluateState.Playable || 
 			newBoardEvaluateData.Side(Side.B).state !== EvaluateState.Playable
 		){
+			setCurrentSide(Side.Free)
 			setGameState(State.GameOver)
 			return;
 		}
@@ -217,6 +223,21 @@ export default function App() {
 			boardEvaluateData
 		)
 
+		// const result = DoRandomAI1With3Sequence(
+		// 	tegomaSideB,
+		// 	boardData,
+		// 	boardEvaluateData
+		// )
+
+		// // 未完了情報が返ってきた
+		// if(result.withNext){
+		// 	setTimeout(()=>{
+		// 		// ちょっとUI側で待機してから再実行する
+		// 		result.withNext()
+		// 	},300)
+		// 	return;
+		// }
+
 		// ゲームオーバー判定が返ってきた
 		if(result.withState){
 			boardEvaluateData.Side(Side.B).state = result.withState
@@ -239,6 +260,7 @@ export default function App() {
 			return;
 		}
 
+		// 移動手が返ってきた
 		if(result.withMove){
 			const [from,to,promotion] = result.withMove
 			// 移動実行
@@ -285,7 +307,7 @@ export default function App() {
 				break;
 			case EvaluateState.GameOverWithStalemate:
 				elements.push(<p>
-					トライ失敗の手しか残っていませんでした。
+					手がないか、トライ失敗の手しか残っていませんでした。
 					コンピューターの勝利です。
 				</p>)
 		}
@@ -304,7 +326,7 @@ export default function App() {
 				break;
 			case EvaluateState.GameOverWithStalemate:
 				elements.push(<p>
-					トライ失敗の手しか残っていませんでした。
+					手がないか、トライ失敗の手しか残っていませんでした。
 					あなたの勝利です。
 				</p>)
 

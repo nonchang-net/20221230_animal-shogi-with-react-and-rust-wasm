@@ -76,3 +76,60 @@ export const InitialBoardData:Array<Array<CellData>> = [[
         koma: Koma.Kirin
     },
 ]];
+
+
+// デバッグ用初期盤面
+// - サクッとランダムAIを負かす用
+export const Debug_InitialBoardData_FastFinish:Array<Array<CellData>> = [[
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+    {
+        side: Side.B,
+        koma: Koma.Lion
+    },
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+],[
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+    {
+        side: Side.Free,
+        koma: Koma.NULL
+    },
+],[
+    {
+        side: Side.A,
+        koma: Koma.Kirin
+    },
+    {
+        side: Side.A,
+        koma: Koma.Hiyoko
+    },
+    {
+        side: Side.A,
+        koma: Koma.Zou
+    },
+],[
+    {
+        side: Side.A,
+        koma: Koma.Zou
+    },
+    {
+        side: Side.A,
+        koma: Koma.Lion
+    },
+    {
+        side: Side.A,
+        koma: Koma.Kirin
+    },
+]];

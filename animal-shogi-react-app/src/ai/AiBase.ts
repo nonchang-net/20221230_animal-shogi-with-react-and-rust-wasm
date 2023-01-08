@@ -26,11 +26,9 @@ import Utils, { Position } from '../Utils';
  * type AIResults
  * - AIの返却型
  */
-export type AIResultsWithNext = [number, number, number, ()=>AIResults]
-
 export class AIResults{
 	// 完了してない時の応答
-	public withNext?: [number, number, number, ()=>AIResults]
+	public withNext?: (current:number, total:number, count:number) => AIResults
 	// 駒移動の応答
 	public withMove?: [Position, Position, boolean]
 	// 手駒配置の応答
@@ -97,3 +95,32 @@ export const DoRandomAI1 = (
 	return result
 
 }
+
+// ランダム手を指すAIを、無駄に3回待たせて分割で返すAI
+
+
+// export const DoRandomAI1With3Sequence = (
+// 	tegomas:Array<Koma>,
+// 	boardData:BoardData,
+// 	boardEvaluateData:BoardEvaluateData
+// ): AIResults => {
+
+// 	//public withNext?: [number, number, number, ()=>AIResults]
+
+// 	// const total = 10;
+// 	// let progress = 1;
+// 	// const next = ():AIResults => {
+// 	// 	progress ++;
+// 	// 	if(progress >= total){
+// 	// 		return DoRandomAI1(tegomas, boardData, boardEvaluateData)
+// 	// 	}
+// 	// 	return next(progress, total, -1)
+// 	// }
+
+// 	// とりあえず次に呼べば結果が返ってくるやつを返す
+// 	const result = new AIResults()
+// 	result.withNext = () => {
+// 		return DoRandomAI1With3Sequence(tegomas, boardData, boardEvaluateData)
+// 	}
+// 	return result
+// }
