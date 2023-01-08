@@ -5,11 +5,12 @@ import Board from './components/Board';
 import Infomation from './components/Captures';
 
 import { Debug_InitialBoardData_FastFinish, InitialBoardData, Koma, Side } from './data/Constants';
-import Utils, { Position } from './Utils';
+import Utils, { Move, Position } from './Utils';
 import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
 import { AIResult} from './ai/AIResult';
 import { DoRandomAI1, DoRandomAI1WithMultipleSequence } from './ai/RandomAI';
+import { DoNormalAI } from './ai/NormalAI';
 
 
 enum State {
@@ -153,7 +154,7 @@ export default function App() {
 				setBoardSelected(false);
 
 				// 移動実行
-				MoveAndNextTurn(selectedBoardPos, pos, promotion);
+				MoveAndNextTurn({from:selectedBoardPos, to:pos}, promotion);
 			}
 		}else{
 			if(boardEvaluateData.Side(Side.A).IsSelectable(pos)){
@@ -178,15 +179,15 @@ export default function App() {
 	}
 
 	// 盤上のコマを移動する
-	const MoveAndNextTurn = (from:Position, to:Position, promotion:boolean = false) => {
+	const MoveAndNextTurn = (move:Move, promotion:boolean = false) => {
 		let newBoardData = boardData.Clone()
 
 		// 移動するセルの情報
-		const mover = newBoardData.Get(from);
+		const mover = newBoardData.Get(move.from);
 		// 移動したSide情報を獲得
 		const side = mover.side;
 		// 移動先のセル状態
-		const cuptured = newBoardData.Get(to);
+		const cuptured = newBoardData.Get(move.to);
 	
 		// 移動先コマがNULLじゃない場合
 		if(cuptured.koma !== Koma.NULL){
@@ -201,15 +202,15 @@ export default function App() {
 		}
 	
 		// 移動先に移動元をコピー
-		newBoardData.Set(new Position(to.x,to.y), mover)
+		newBoardData.Set(new Position(move.to.x,move.to.y), mover)
 	
 		// 成るフラグが立っている際は移動先のコマを鶏にする
 		if(promotion){
-			newBoardData.Get(to).koma = Koma.Niwatori
+			newBoardData.Get(move.to).koma = Koma.Niwatori
 		}
 	
 		// 移動元をクリア
-		newBoardData.Set(from, {koma:Koma.NULL, side:Side.Free})
+		newBoardData.Set(move.from, {koma:Koma.NULL, side:Side.Free})
 
 		NextTurn(newBoardData)
 	}
@@ -225,7 +226,8 @@ export default function App() {
 	// コンピューターの手番処理
 	const ComputerTurn = ()=>{
 		// 再帰呼び出し
-		// - 一発で結果が返ってくれば一撃で完了する
+		// - 処理が長いとブラウザ応答警告になるので、小分けに呼び出して回避する
+		// - 一発で結果が返ってくればsetTimeoutなしで完了
 
 		const recursiveCall = (result:AIResult)=>{
 			if(result.withNext){
@@ -263,8 +265,16 @@ export default function App() {
 		// ));
 
 		// AI実行: テスト2: 10回進捗情報を返してから完了応答を返すランダムAI
-		setComputingStartTime(Date.now)
-		recursiveCall(DoRandomAI1WithMultipleSequence(
+		// setComputingStartTime(Date.now)
+		// recursiveCall(DoRandomAI1WithMultipleSequence(
+		// 	tegomaSideB,
+		// 	boardData,
+		// 	boardEvaluateData
+		// ));
+
+		// AI実行: テスト3: 着手可能手を全評価するAIを実行
+		recursiveCall(DoNormalAI(
+			tegomaSideA,
 			tegomaSideB,
 			boardData,
 			boardEvaluateData
@@ -298,9 +308,9 @@ export default function App() {
 
 		// 移動手が返ってきた
 		if(result.withMove){
-			const [from,to,promotion] = result.withMove
+			const [move,promotion] = result.withMove
 			// 移動実行
-			MoveAndNextTurn(from, to, promotion)
+			MoveAndNextTurn(move, promotion)
 		}
 
 	}

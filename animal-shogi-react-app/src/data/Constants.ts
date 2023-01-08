@@ -133,3 +133,42 @@ export const Debug_InitialBoardData_FastFinish:Array<Array<CellData>> = [[
         koma: Koma.Kirin
     },
 ]];
+
+// 盤上にある駒の評価用点数
+// memo: 過去実装の定義値をそのまま流用……エビデンスは不明
+// - 多分「持ってたらこれくらい有利かな」と言う気持ちで入れた数字
+export const KomaScore = {
+	0: -999999, // NULL - 評価してはいけないのでエラー検知用のマイナス値にしておく
+	1: 0, // Lion なくなる可能性はないし点評価デバッグで目障りなので0にする
+	2: 100, // Kirin
+	3: 100, // Zou
+	4: 75, // Hiyoko
+	5: 110, // Niwatori
+};
+
+// 手駒として所持している駒の評価用点数
+// memo: 過去実装の定義値をそのまま流用……エビデンスは不明
+// - 多分「持ってたらこれくらい有利かな」と言う気持ちで入れた数字
+export const TegomaScore = {
+	0: -999999, // NULL - 評価してはいけないのでエラー検知用のマイナス値にしておく
+	1: -999999, // Lion - 手駒になってはいけないのでエラー検知用のマイナス値にしておく
+	2: 150, // Kirin
+	3: 150, // Zou
+	4: 100, // Hiyoko
+	5: -999999, // Niwatori - 手駒になってはいけないのでエラー検知用のマイナス値にしておく
+};
+
+//ライオンが前に出た場合の1行あたりのスコア
+export const LionLineScore = 140 ;
+
+//「効く位置」いっこあたりのスコア
+export const AttackablePosScore = 30 ;
+
+// 着手可能手一つあたりのスコア
+export const EnableMoveScore = 30;
+
+// トライ可能時のスコア
+export const TryableScore = 250;
+
+// チェックメイト時のスコア
+export const CheckmateScore = 200;

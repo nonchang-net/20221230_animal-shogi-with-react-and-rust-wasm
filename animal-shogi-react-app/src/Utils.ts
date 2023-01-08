@@ -3,7 +3,12 @@
  * - 共有メソッド置き場
  * - 状態に依存しないメソッドはクラスに定義せず、単独のユーティリティ関数に分けて分類していく方針
  */
+import { count } from "console"
 import { Koma, Side } from "./data/Constants"
+
+export type Move = {from:Position, to:Position}
+export type Moves = Array<Move>
+export type BoolMap = Array<Array<boolean>>
 
 // 座標指定クラス
 // - 差分をAddできるようにしたかっただけ。ただのベクトル
@@ -86,7 +91,19 @@ const GetFilledFlagBoard = (b:boolean):Array<Array<boolean>> => {
     return [[b,b,b],[b,b,b],[b,b,b],[b,b,b]];
 }
 
+// フラグボードのtrueの数を数える
+const GetFlagBoardTrueCount = (board:Array<Array<boolean>>):number =>{
+	let count = 0
+	for(let y=0 ; y<4 ; y++){
+		for(let x=0 ; x<3 ; x++){
+			if(board[y][x]) count ++
+		}
+	}
+	return count;
+}
+
 // 公開メソッド一覧をexport default
+// TODO: こんなことせず、普通に個別にexportすればいい気がしてきた
 const publics={
 	// privates？ 検討中
 	RandomRange: RandomRange,
@@ -94,6 +111,7 @@ const publics={
 	GetKomaMoveRules: GetKomaMoveRules,
 	ReverseSide: ReverseSide,
 	GetFilledFlagBoard: GetFilledFlagBoard,
+	GetFlagBoardTrueCount: GetFlagBoardTrueCount,
 
 	// テスト系
 	// TEST_getRandomCell: TEST_getRandomCell,

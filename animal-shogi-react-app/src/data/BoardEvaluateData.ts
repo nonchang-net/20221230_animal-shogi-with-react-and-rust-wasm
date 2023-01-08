@@ -4,9 +4,9 @@
  * - 表現に必要なデータクラスを定義
  */
 import { CellData } from "../components/Cell";
-import Utils, { Position } from "../Utils"
+import Utils, { Move, Position } from "../Utils"
 import { BoardData } from "./BoardData"
-import { Koma, Side } from "./Constants"
+import { AttackablePosScore, CheckmateScore, EnableMoveScore, Koma, KomaScore, LionLineScore, Side, TegomaScore, TryableScore } from "./Constants"
 
 export enum EvaluateState {
 	Playable, // ゲーム続行可能
@@ -22,7 +22,7 @@ export class SideEvaluationData {
 	// 選択可能なコマ位置の一覧 移動不可能なコマは除く
 	public selectablePos: Array<Position>
 	// 着手可能手の一覧
-	public enableMoves: Array<{from:Position, to:Position}>
+	public enableMoves: Array<Move>
 	// 効いている場所の盤面マップ
 	public attackablePositionMap: Array<Array<boolean>>
 	// チェックメイトされているかどうか
@@ -33,7 +33,7 @@ export class SideEvaluationData {
 	constructor(){
 		this.state = EvaluateState.Playable
 		this.selectablePos = new Array<Position>()
-		this.enableMoves = new Array<{from:Position, to:Position}>()
+		this.enableMoves = new Array<Move>()
 		this.attackablePositionMap = Utils.GetFilledFlagBoard(false)
 		this.isCheckmate = false
 		this.isEnemyTryable = false
@@ -295,7 +295,7 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 		// 相手が1箇所だけトライアブルなら、そこに対する着手可能手以外は許可できない
 		if(tryablePositions.length === 1){
-			const oldEnableMoves = new Array<{from:Position, to:Position}>()
+			const oldEnableMoves = new Array<Move>()
 			// clone
 			for(const move of evaluateData.Side(side).enableMoves){
 				oldEnableMoves.push(move)
@@ -330,4 +330,112 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 	return evaluateData;
 
+}
+
+
+/**
+ * boardDataとBoardEvaluationDataからSide目線のスコアを算出する
+ * - AI評価専用
+ * - BoardEvaluateDataに含めるとUI処理に不要な計算になるのでメソッドを分けた
+ * - 過去の実装をそのまま持ってきたのでエビデンスは不明
+ * - 5桁スコアは勝利確定として扱ってた様子？よくわからん。。
+ */
+export const GetBoardScore = (
+	mySide: Side,
+	board: BoardData,
+	tegomaSideA: Array<Koma>,
+	tegomaSideB: Array<Koma>,
+	evaluated: BoardEvaluateData
+):number => {
+
+	DebugInfo = "";
+
+	const enemySide = Utils.ReverseSide(mySide);
+	const myEvals = evaluated.Side(mySide);
+	const enemyEvals = evaluated.Side(enemySide);
+
+	// まず勝利状態になっている場合は全て99999を返す
+	if(myEvals.state !== EvaluateState.Playable){
+
+		AddDebugInfo(`score= ${-99999} : side${mySide} は負けている`)
+
+		return -99999 //自分は負けている
+	}else if(enemyEvals.state !== EvaluateState.Playable){
+
+		AddDebugInfo(`score= ${99999} : side${mySide} は勝利している`)
+
+		return 99999 // 勝利している
+	}
+
+	let score = 0;
+
+	// 盤面にある手駒で点数評価
+	board.Each(pos => {
+		const cell = board.Get(pos);
+		if(cell.side !== Side.Free){
+			// 自陣なら加算、相手駒なら減算
+			const isMyKoma = mySide === cell.side ? 1 : -1;
+			score += KomaScore[cell.koma] * isMyKoma;
+
+			AddDebugInfo(`score= ${score} : side${cell.side} 盤面駒 ${cell.koma} で ${KomaScore[cell.koma] * isMyKoma}`)
+		}
+	});
+
+	// 手駒で点数評価
+	for(const koma of tegomaSideA){
+		const isMyKoma = mySide === Side.A ? 1 : -1;
+		score += TegomaScore[koma] * isMyKoma;
+
+		AddDebugInfo(`score= ${score} : side${Side.A} 手駒 ${koma} で ${TegomaScore[koma] * isMyKoma}`)
+	}
+	for(const koma of tegomaSideB){
+		const isMyKoma = mySide === Side.B ? 1 : -1;
+		score += TegomaScore[koma] * isMyKoma;
+
+		AddDebugInfo(`score= ${score} : side${Side.B} 手駒 ${koma} で ${TegomaScore[koma] * isMyKoma}`)
+	}
+
+	for(const side of [Side.A, Side.B]){
+		const isMySide = mySide === side ? 1 : -1;
+		const sideEval = evaluated.Side(side)
+
+		// 着手可能手の多さを点数に加える
+		score += sideEval.enableMoves.length * EnableMoveScore * isMySide;
+
+		AddDebugInfo(`score= ${score} : side${side} 着手可能数 ${sideEval.enableMoves.length} で ${sideEval.enableMoves.length * EnableMoveScore * isMySide}`)
+
+		// 効いてる場所の数を点数に加える
+		const attackableCount = Utils.GetFlagBoardTrueCount(sideEval.attackablePositionMap)
+		score += attackableCount * AttackablePosScore * isMySide;
+
+		AddDebugInfo(`score= ${score} : side${side} 効いてる場所の数 ${attackableCount} で ${attackableCount * AttackablePosScore * isMySide}`)
+
+		// Lionのトライ可能性評価で1ラインごとに加算
+		const lionPos = board.Search(side, Koma.Lion);
+		if(side === Side.A){
+			score += (4-1- lionPos.y) * LionLineScore * isMySide;
+
+			AddDebugInfo(`score= ${score} : side${side} ライオン進捗で ${(4-1- lionPos.y) * LionLineScore * isMySide}`)
+		}else{
+			score += lionPos.y * LionLineScore * isMySide;
+			AddDebugInfo(`score= ${score} : side${side} ライオン進捗で ${lionPos.y * LionLineScore * isMySide}`)
+		}
+
+		// チェックメイトしている場合は一定点数加算
+		score += sideEval.isCheckmate ? CheckmateScore * isMySide : 0
+		AddDebugInfo(`score= ${score} : side${side} チェックメイトボーナス ${sideEval.isCheckmate ? CheckmateScore * isMySide : 0}`)
+		
+
+		// トライ可能な時は一定点数加算。敵側フラグなので注意
+		score += sideEval.isEnemyTryable ? TryableScore * -isMySide : 0
+		AddDebugInfo(`score= ${score} : side${side} トライ可能ボーナス ${sideEval.isEnemyTryable ? TryableScore * -isMySide : 0}`)
+	}
+
+	return score;	
+}
+
+export let DebugInfo = ""
+
+const AddDebugInfo = (log:string)=>{
+	DebugInfo += "\n"+log
 }

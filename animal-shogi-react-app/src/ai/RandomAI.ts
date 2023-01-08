@@ -57,11 +57,10 @@ export const DoRandomAI1 = (
 		move.to.y === 3
 	)
 
-	// 移動実行
+	// 移動の意思決定状態を返す
 	const result = new AIResult()
-	result.withMove = [move.from, move.to, promotion]
+	result.withMove = [move, promotion]
 	return result
-
 }
 
 // ランダム手を指すAIを、複数回の継続情報に分けて返すサンプル
