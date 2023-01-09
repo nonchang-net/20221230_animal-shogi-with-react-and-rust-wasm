@@ -27,7 +27,7 @@ export const DoRandomAI1 = (
 		const allPos = boardData.SearchAllNull()
 		const pos = allPos[Utils.RandomRange(allPos.length)]
 		const result = new AIResult()
-		result.withPut = [0, pos]
+		result.withPut = {index:0, to:pos}
 		return result
 	}
 
@@ -47,14 +47,14 @@ export const DoRandomAI1 = (
 	const move = enableMoves[Utils.RandomRange(enableMoves.length)]
 
 	// ヒヨコでy=3を選んだ際は、コンピューターは常時promotionする
-	const promotion = (
+	move.promotion = (
 		boardData.Get(move.from).koma === Koma.Hiyoko &&
 		move.to.y === 3
 	)
 
 	// 移動の意思決定状態を返す
 	const result = new AIResult()
-	result.withMove = [move, promotion]
+	result.withMove = move
 	return result
 }
 

@@ -1,7 +1,5 @@
-import { BoardData } from '../data/BoardData';
-import { BoardEvaluateData, EvaluateState } from '../data/BoardEvaluateData'
-import { Koma, Side } from '../data/Constants'
-import Utils, { Move, Position } from '../Utils';
+import { EvaluateState } from '../data/BoardEvaluateData'
+import { Move, Put } from '../Utils';
 
 /**
  * type AIResults
@@ -11,9 +9,9 @@ export class AIResult{
 	// 完了してない時の応答
 	public withNext?: [current:number, total:number, count:number, Next:()=>AIResult]
 	// 駒移動の応答
-	public withMove?: [Move, boolean]
+	public withMove?: Move
 	// 手駒配置の応答
-	public withPut?: [number, Position]
+	public withPut?: Put
 	// ゲームオーバーだった応答
 	public withState?: EvaluateState
 }

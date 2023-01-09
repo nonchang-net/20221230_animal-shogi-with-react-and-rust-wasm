@@ -3,12 +3,21 @@
  * - 共有メソッド置き場
  * - 状態に依存しないメソッドはクラスに定義せず、単独のユーティリティ関数に分けて分類していく方針
  */
-import { count } from "console"
 import { Koma, Side } from "./data/Constants"
 
-export type Move = {from:Position, to:Position}
+// 移動手
+export type Move = {from:Position, to:Position, promotion?:boolean}
 export type Moves = Array<Move>
+
+// 手駒配置手
+export type Tegomas = Array<Koma>
+export type Put = {index:number, to:Position}
+export type Puts = Array<Put>
 export type BoolMap = Array<Array<boolean>>
+export type Positions = Array<Position>
+
+// 着手可能手の一覧
+export type Hands = {moves: Moves, puts: Puts}
 
 // 座標指定クラス
 // - 差分をAddできるようにしたかっただけ。ただのベクトル
@@ -52,7 +61,7 @@ const RandomRange = (max: number):number => {
 // 仮置き: Koma enumを元にSide.A(下のプレイヤー)視点の移動可能方向セットを返す
 // - ルックアップテーブル書けば済むと思うのだけどインデックスシグネチャ周りで混乱したので一旦switch-caseで雑に定義。。
 // - もっといい書き方あると思うので後で直したい
-const GetKomaMoveRules = (koma:Koma):Array<Position> => {
+const GetKomaMoveRules = (koma:Koma):Positions => {
     switch(koma){
         case Koma.Hiyoko:
             return [new Position(0,-1)]
@@ -87,12 +96,12 @@ const ReverseSide = (side:Side):Side =>{
 }
 
 // フラグでフィルされた盤面評価用のboolean配列を作成
-const GetFilledFlagBoard = (b:boolean):Array<Array<boolean>> => {
+const GetFilledFlagBoard = (b:boolean):BoolMap => {
     return [[b,b,b],[b,b,b],[b,b,b],[b,b,b]];
 }
 
 // フラグボードのtrueの数を数える
-const GetFlagBoardTrueCount = (board:Array<Array<boolean>>):number =>{
+const GetFlagBoardTrueCount = (board:BoolMap):number =>{
 	let count = 0
 	for(let y=0 ; y<4 ; y++){
 		for(let x=0 ; x<3 ; x++){

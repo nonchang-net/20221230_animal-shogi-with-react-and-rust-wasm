@@ -154,7 +154,7 @@ export default function App() {
 				setBoardSelected(false);
 
 				// 移動実行
-				MoveAndNextTurn({from:selectedBoardPos, to:pos}, promotion);
+				MoveAndNextTurn({from:selectedBoardPos, to:pos, promotion:promotion});
 			}
 		}else{
 			if(boardEvaluateData.Side(Side.A).IsSelectable(pos)){
@@ -179,7 +179,7 @@ export default function App() {
 	}
 
 	// 盤上のコマを移動する
-	const MoveAndNextTurn = (move:Move, promotion:boolean = false) => {
+	const MoveAndNextTurn = (move:Move) => {
 		let newBoardData = boardData.Clone()
 
 		// 移動するセルの情報
@@ -205,7 +205,7 @@ export default function App() {
 		newBoardData.Set(new Position(move.to.x,move.to.y), mover)
 	
 		// 成るフラグが立っている際は移動先のコマを鶏にする
-		if(promotion){
+		if(move.promotion === true){
 			newBoardData.Get(move.to).koma = Koma.Niwatori
 		}
 	
@@ -293,14 +293,14 @@ export default function App() {
 
 		// 手駒利用コマンドが返ってきた
 		if(result.withPut){
-			const [index,pos] = result.withPut
+			const put = result.withPut
 			let newBoardData = boardData.Clone()
 			// 選択された手駒取得
-			const tegoma = tegomaSideB[index]
+			const tegoma = tegomaSideB[put.index]
 			// 選択された手駒を削除
-			tegomaSideB.splice(index,1)
+			tegomaSideB.splice(put.index,1)
 			// 手駒をセット
-			newBoardData.Set(pos, {koma:tegoma, side:Side.B})
+			newBoardData.Set(put.to, {koma:tegoma, side:Side.B})
 			// 次のターンへ
 			NextTurn(newBoardData)
 			return;
@@ -308,9 +308,9 @@ export default function App() {
 
 		// 移動手が返ってきた
 		if(result.withMove){
-			const [move,promotion] = result.withMove
+			const move = result.withMove
 			// 移動実行
-			MoveAndNextTurn(move, promotion)
+			MoveAndNextTurn(move)
 		}
 
 	}

@@ -1,5 +1,5 @@
 import { CellData } from "../components/Cell";
-import Utils, { Position } from "../Utils";
+import Utils, { BoolMap, Position, Positions } from "../Utils";
 import { Koma, Side } from "./Constants";
 
 // 現在の盤情報
@@ -59,7 +59,7 @@ export class BoardData{
 
 	// 見つかったnull座標を全て返す
 	// - 一旦ランダムAIのランダム手駒配置用に実装
-	public SearchAllNull():Array<Position> {
+	public SearchAllNull():Positions {
 		let results = new Array<Position>()
 		for(var y=0 ; y<4 ; y++){
 			for(var x=0 ; x<3 ; x++){
@@ -72,10 +72,7 @@ export class BoardData{
 	}
 
 	// 両陣営の効いてる場所のフラグマップのタプルを作成して返す
-	public GetAttackableMaps():[
-		Array<Array<boolean>>,
-		Array<Array<boolean>>
-	]{
+	public GetAttackableMaps():[BoolMap, BoolMap]{
 		var sideAMap = Utils.GetFilledFlagBoard(false)
 		var sideBMap = Utils.GetFilledFlagBoard(false)
 		this.Each((pos)=>{

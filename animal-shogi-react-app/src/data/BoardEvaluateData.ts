@@ -4,7 +4,7 @@
  * - 表現に必要なデータクラスを定義
  */
 import { CellData } from "../components/Cell";
-import Utils, { Move, Position } from "../Utils"
+import Utils, { BoolMap, Move, Position, Positions } from "../Utils"
 import { BoardData } from "./BoardData"
 import { AttackablePosScore, CheckmateScore, EnableMoveScore, Koma, KomaScore, LionLineScore, Side, TegomaScore, TryableScore } from "./Constants"
 
@@ -20,11 +20,11 @@ export class SideEvaluationData {
 	// 評価結果enum
 	public state: EvaluateState
 	// 選択可能なコマ位置の一覧 移動不可能なコマは除く
-	public selectablePos: Array<Position>
+	public selectablePos: Positions
 	// 着手可能手の一覧
 	public enableMoves: Array<Move>
 	// 効いている場所の盤面マップ
-	public attackablePositionMap: Array<Array<boolean>>
+	public attackablePositionMap: BoolMap
 	// チェックメイトされているかどうか
 	public isCheckmate: boolean
 	// 相手がトライ可能かどうか
@@ -85,7 +85,7 @@ export class BoardEvaluateData{
 const IsCheckmate = (
 	side: Side,
 	boardData:BoardData,
-	enemyArrackablePositionMap: Array<Array<boolean>>
+	enemyArrackablePositionMap: BoolMap
 ): boolean => {
 	const lionPos = boardData.Search(side, Koma.Lion)
 	// Lionの所在地がattackableならチェックメイト。
@@ -103,8 +103,8 @@ const GetTryablePositions = (
 	// 現在の盤面情報
 	boardData:BoardData,
 	// 相手側サイドの効いてる座標一覧
-	enemyArrackablePositionMap: Array<Array<boolean>>
-): Array<Position> => {
+	enemyArrackablePositionMap: BoolMap
+): Positions => {
 	// 案: lionをが最深列の一歩手前にいる際に、最深列の「効いていない」場所の一覧を出す
 
 	let results = new Array<Position>()
