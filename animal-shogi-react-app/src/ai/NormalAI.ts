@@ -28,46 +28,82 @@ const GetHands = (
     return {moves,puts}
 }
 
-export const DoNormalAI = (
+// 手のスコアを計算する
+const GetMoveScore = (
+    side:Side,
+    move:Move,
+    board:BoardData,
+	tegomaSideA:Tegomas,
+	tegomaSideB:Tegomas
+)=>{
+    // ボードをクローンして状態を適用・評価
+    const newBoard = board.Clone()
+    const moveCell = newBoard.Get(move.from)
+    newBoard.Set(move.to, {koma:moveCell.koma,side:side})
+    newBoard.Set(move.from, {koma:Koma.NULL,side:Side.Free})
+    const newEvaluated = Evaluate(newBoard, tegomaSideA, tegomaSideB);
+
+    // デバッグ
+    // console.log(`move eval:`,move, moveCell, score)
+
+    return GetBoardScore(Side.B, newBoard, tegomaSideA, tegomaSideB, newEvaluated);
+}
+
+// 駒配置手のスコアを計算する
+const GetPutScore = (
+    side:Side,
+    put:Put,
+    board:BoardData,
+	tegomaSideA:Tegomas,
+	tegomaSideB:Tegomas
+)=>{
+    const newBoard = board.Clone()
+    const putTegoma = side === Side.A ? tegomaSideA[put.index] : tegomaSideB[put.index]
+    // 手駒を配置
+    newBoard.Set(put.to, {koma:putTegoma, side:side})
+
+    // セットした手駒がない状態をclone
+    const newTegomaSideB = new Array<Koma>()
+    for(let i=0 ; i<tegomaSideB.length ; i++){
+        if(i !== put.index) newTegomaSideB.push(tegomaSideB[i])
+    }
+    // 盤面評価実行
+    const newEvaluated = Evaluate(newBoard, tegomaSideA, tegomaSideB);
+
+    // デバッグ
+    // console.log(`put eval:`,putTegoma, pos, score)
+
+    // 点数算出
+    return GetBoardScore(side, newBoard, tegomaSideA, tegomaSideB, newEvaluated)
+}
+
+// side側の最も良い手を選んで返す
+const GetHighscoreHand = (
+    side:Side,
+    board:BoardData,
 	tegomaSideA:Tegomas,
 	tegomaSideB:Tegomas,
-	boardData:BoardData,
-	evaluated:BoardEvaluateData
-): AIResult => {
+    evaluated: BoardEvaluateData
+):AIResult => {
 
     let evaluateCount = 0;
     let highScore = -999999;
+
+    // 着手可能手の一覧を取得
+    const hands:Hands = GetHands(
+        side,
+        side === Side.A ? tegomaSideA : tegomaSideB,
+        board,
+        evaluated
+    )
 
     // 選択した手を格納
     // note: 必ず最初の評価でハイスコアが更新されて上書きされるのだけど、初期値を入れないとコンパイルエラーになるので仕方なく無効な値で初期化している
     let selectedMove:Move = {from: new Position(-1,-1), to: new Position(-1, -1)}
 
-    // let HighScoreDebugInfo = ""
-
-    // コンピューターの着手可能手の一覧を取得
-    const hands:Hands = GetHands(
-        Side.B,
-        tegomaSideB,
-        boardData,
-        evaluated
-    )
-
     // 1st pass: 盤上の着手可能手から一番高いスコアの手を探す
     for(const move of hands.moves){
-        // newBoard でコマを移動したデータを作る
-        const newBoard = boardData.Clone()
-        const moveCell = newBoard.Get(move.from)
-
-        newBoard.Set(move.to, {koma:moveCell.koma,side:Side.B})
-        newBoard.Set(move.from, {koma:Koma.NULL,side:Side.Free})
-
-        // 盤面評価実行
-        const newEvaluated = Evaluate(newBoard, tegomaSideA, tegomaSideB);
-        // 点数算出
-        const score = GetBoardScore(Side.B, newBoard, tegomaSideA, tegomaSideB, newEvaluated)
-
-        // デバッグ
-        // console.log(`move eval:`,move, moveCell, score)
+        const score = GetMoveScore(Side.B, move, board, tegomaSideA,tegomaSideB)
 
         // ハイスコアを更新したら選択手とする
         if(score > highScore){
@@ -83,25 +119,7 @@ export const DoNormalAI = (
 
     let selectedPut: Put = {index:-1, to:new Position(-1,-1)}
     for(const put of hands.puts){
-        const newBoard = boardData.Clone()
-        const putTegoma = tegomaSideB[put.index]
-
-        // 手駒を配置
-        newBoard.Set(put.to, {koma:putTegoma, side:Side.B})
-
-        // セットした手駒がない状態をclone
-        const newTegomaSideB = new Array<Koma>()
-        for(let i=0 ; i<tegomaSideB.length ; i++){
-            if(i !== put.index) newTegomaSideB.push(tegomaSideB[i])
-        }
-
-        // 盤面評価実行
-        const newEvaluated = Evaluate(newBoard, tegomaSideA, tegomaSideB);
-        // 点数算出
-        const score = GetBoardScore(Side.B, newBoard, tegomaSideA, tegomaSideB, newEvaluated)
-
-        // デバッグ
-        // console.log(`put eval:`,putTegoma, pos, score)
+        const score = GetPutScore(Side.B, put, board, tegomaSideA, tegomaSideB)
 
         // ハイスコアを更新したら選択手とする
         if(score > highScore){
@@ -123,14 +141,22 @@ export const DoNormalAI = (
 	const result = new AIResult()
     // ヒヨコでy=3を選んだ際は、コンピューターは常時promotionする
 	selectedMove.promotion = (
-		boardData.Get(selectedMove.from).koma === Koma.Hiyoko &&
+		board.Get(selectedMove.from).koma === Koma.Hiyoko &&
 		selectedMove.to.y === 3
 	)
 	result.withMove = selectedMove
+    return result;
+}
 
-    // console.log(HighScoreDebugInfo)
 
-	return result
+// 一手先を全評価するAI
+export const DoNormalAI = (
+	tegomaSideA:Tegomas,
+	tegomaSideB:Tegomas,
+	boardData:BoardData,
+	evaluated:BoardEvaluateData
+): AIResult => {
+	return GetHighscoreHand(Side.B, boardData, tegomaSideA, tegomaSideB, evaluated)
 }
 
 
