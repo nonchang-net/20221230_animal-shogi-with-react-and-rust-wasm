@@ -3,6 +3,7 @@ import { BoardEvaluateData, DebugInfo, Evaluate, EvaluateState, GetBoardScore } 
 import { Koma, Side } from '../data/Constants'
 import Utils, { Move, Position } from '../Utils';
 import { AIResult } from './AIResult';
+import { NegaMax } from './NegaMax';
 
 export const DoNormalAI = (
 	tegomaSideA:Array<Koma>,
@@ -11,22 +12,16 @@ export const DoNormalAI = (
 	evaluated:BoardEvaluateData
 ): AIResult => {
 
-    // impremented now
-    // const result = new AIResult()
-    // result.withState = EvaluateState.GameOverWithCheckmate
-    // return result
-
     let evaluateCount = 0;
-
-    // まず手始めに、着手可能手全部のスコアを集めて、その中で一番スコアが高い手を返すAIを作る
     let highScore = -999999;
 
     // 選択した手
     // note: 必ず最初の評価でハイスコアが更新されて上書きされるのだけど、初期値を入れないとコンパイルエラーになるので仕方なく無効な値で初期化している
     let selectedMove:Move = {from: new Position(-1,-1), to: new Position(-1, -1)}
 
-    let HighScoreDebugInfo = ""
+    // let HighScoreDebugInfo = ""
 
+    // 1st pass: 盤上の着手可能手から一番高いスコアの手を探す
     for(const move of evaluated.Side(Side.B).enableMoves){
         // newBoard でコマを移動したデータを作る
         const newBoard = boardData.Clone()
@@ -36,23 +31,24 @@ export const DoNormalAI = (
         newBoard.Set(move.from, {koma:Koma.NULL,side:Side.Free})
 
         // 盤面評価実行
-        const newEvaluated = Evaluate(newBoard);
+        const newEvaluated = Evaluate(newBoard, tegomaSideA, tegomaSideB);
         // 点数算出
         const score = GetBoardScore(Side.B, newBoard, tegomaSideA, tegomaSideB, newEvaluated)
 
         // デバッグ
-        console.log(`move eval:`,move, moveCell, score)
+        // console.log(`move eval:`,move, moveCell, score)
 
         // ハイスコアを更新したら選択手とする
         if(score > highScore){
             highScore = score ;
             selectedMove = move
-            HighScoreDebugInfo = DebugInfo
+            // HighScoreDebugInfo = DebugInfo
         }
         evaluateCount ++;
     }
 
-    // 2nd pass: チェックメイトもトライアブルもない時は、全ての手駒を全ての空き枠に配置して、より高いスコアの局面があるかチェックする
+    // 2nd pass: チェックメイトもトライアブルもない時は手駒評価
+    // - 全ての手駒を全ての空き枠に配置して、より高いスコアの局面があるかチェック
     let selectedPut: [number, Position] = [-1, new Position(-1,-1)]
     if(!evaluated.Side(Side.B).isCheckmate && !evaluated.Side(Side.B).isEnemyTryable){
         for(let tegomaIndex=0 ; tegomaIndex < tegomaSideB.length ; tegomaIndex ++){
@@ -70,18 +66,18 @@ export const DoNormalAI = (
                 }
 
                 // 盤面評価実行
-                const newEvaluated = Evaluate(newBoard);
+                const newEvaluated = Evaluate(newBoard, tegomaSideA, tegomaSideB);
                 // 点数算出
                 const score = GetBoardScore(Side.B, newBoard, tegomaSideA, tegomaSideB, newEvaluated)
 
                 // デバッグ
-                console.log(`put eval:`,putTegoma, pos, score)
+                // console.log(`put eval:`,putTegoma, pos, score)
 
                 // ハイスコアを更新したら選択手とする
                 if(score > highScore){
                     highScore = score ;
                     selectedPut = [tegomaIndex, pos]
-                    HighScoreDebugInfo = DebugInfo
+                    // HighScoreDebugInfo = DebugInfo
                 }
                 evaluateCount ++;
 
@@ -105,8 +101,35 @@ export const DoNormalAI = (
 	)
 	result.withMove = [selectedMove, promotion]
 
-    console.log(HighScoreDebugInfo)
+    // console.log(HighScoreDebugInfo)
 
 	return result
 }
 
+
+/**
+ * negamaxで先読み
+ * @param tegomaSideA 
+ * @param tegomaSideB 
+ * @param boardData 
+ * @param evaluated 
+ */
+export const DoNormalAIWithNegaMax = (
+    maxDepth: number,
+    limitScore: number,
+	tegomaSideA: Array<Koma>,
+	tegomaSideB: Array<Koma>,
+	board: BoardData,
+	evaluated: BoardEvaluateData
+): AIResult => {
+
+    let evaluateCount = 0;
+    let highScore = -999999;
+    let currentDepth = 0;
+
+    // NegaMax(maxDepth, -999999, currentDepth)
+
+    const result = new AIResult()
+    result.withState = EvaluateState.GameOverWithCheckmate
+    return result
+}

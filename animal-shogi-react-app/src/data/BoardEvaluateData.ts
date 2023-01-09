@@ -117,12 +117,20 @@ const GetTryablePositions = (
 	// トライ成功となるy座標
 	const tryLine = side === Side.A ? 0 : 3;
 
-	// x座標がを確認、安全なら結果に追加
 	for(let x=0 ; x<3 ; x++){
+		// ライオンの動ける範囲外ならcontinue
+		if(lionPos.x - 1 > x || lionPos.x + 1 < x) continue
+		// 自分の駒がある場所は移動できない
+		const targetCell = boardData.Get(new Position(x,tryLine));
+		if(targetCell.side === side) continue;
+		// 効いてない場所はトライアブル
 		if(!enemyArrackablePositionMap[tryLine][x]){
 			results.push(new Position(x,tryLine))
 		}
 	}
+
+	// console.error(`check TODO:`,results) // なんかバグある気がしているのでログ出しておく
+
 	return results
 }
 
@@ -132,7 +140,11 @@ const GetTryablePositions = (
 // - Side.A/Bそれぞれの、着手可能手の一覧を収集
 // - Side.A/Bそれぞれの、効いている場所一覧を収集
 // - (UI用) プレイヤーの選択可能な駒の一覧を収集
-export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
+export const Evaluate = (
+	boardData:BoardData,
+	tegomaSideA: Array<Koma>,
+	tegomaSideB: Array<Koma>
+):BoardEvaluateData => {
 
 	// console.log(`Evaluate()`,boardData)
 
@@ -146,7 +158,6 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 	// 2nd pass: チェックメイトされているか判定、格納
 	// - 1st passの効いてる場所一覧情報を利用
-	// undone: 手番じゃない方を評価する意味はないはず
 	evaluateData.Side(Side.A).isCheckmate = IsCheckmate(Side.A, boardData, evaluateData.Side(Side.B).attackablePositionMap)
 	evaluateData.Side(Side.B).isCheckmate = IsCheckmate(Side.B, boardData, evaluateData.Side(Side.A).attackablePositionMap)
 
@@ -154,9 +165,9 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 	// 3rd path: チェックメイトされている方の着手可能手を評価
 	// - ライオン周辺のみ評価する
-	// undone: 手番じゃない方を評価する意味はないはず
 	for(const side of [Side.A, Side.B]){
-		if(evaluateData.Side(side).isCheckmate){
+		var sideEval = evaluateData.Side(side);
+		if(sideEval.isCheckmate){
 			
 			// まずライオンの移動可能場所をenableMovesに入れていく
 			const lionPos = boardData.Search(side, Koma.Lion)
@@ -177,9 +188,9 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 				if(! evaluateData.Side(Utils.ReverseSide(side)).attackablePositionMap[targetPos.y][targetPos.x]
 				){
 					// この移動は着手可能手である
-					evaluateData.Side(side).enableMoves.push({from:lionPos, to:targetPos})
+					sideEval.enableMoves.push({from:lionPos, to:targetPos})
 					// 着手可能セル一覧にも保存する
-					evaluateData.Side(side).selectablePos.push(lionPos)
+					sideEval.selectablePos.push(lionPos)
 				}
 			}
 
@@ -228,17 +239,16 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 
 					if(isLionSafe){
 						//enableMovesに追加
-						evaluateData.Side(side).enableMoves.push({from:pos, to:targetPos})
+						sideEval.enableMoves.push({from:pos, to:targetPos})
 						// 着手可能セル一覧にも保存する
-						evaluateData.Side(side).selectablePos.push(pos)
+						sideEval.selectablePos.push(pos)
 					}
 				}
 			}
 
 			// 着手可能手がない場合、チェックメイト回避策がないのでGameOver
-			// undone: 評価サイドのGameOverが決まったら後続の判定は不要
-			if(evaluateData.Side(side).enableMoves.length === 0){
-				evaluateData.Side(side).state = EvaluateState.GameOverWithCheckmate
+			if(sideEval.enableMoves.length === 0){
+				sideEval.state = EvaluateState.GameOverWithCheckmate
 			}
 		}
 	}
@@ -250,8 +260,10 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 		const side = cell.side;
 		if(side === Side.Free) return;
 
+		var sideEval = evaluateData.Side(side);
+
 		// チェックメイトされている方は先に評価済みなので棄却
-		if(evaluateData.Side(side).isCheckmate) return;
+		if(sideEval.isCheckmate) return;
 
 		const moveRules = Utils.GetKomaMoveRules(cell.koma)
 		for(const rulePos of moveRules){
@@ -273,58 +285,66 @@ export const Evaluate = (boardData:BoardData):BoardEvaluateData => {
 			}
 
 			// 以上の判定に引っ掛からなければ、この移動は着手可能手である
-			evaluateData.Side(side).enableMoves.push({from:pos, to:targetPos})
+			sideEval.enableMoves.push({from:pos, to:targetPos})
 
 			// 着手可能セル一覧にも保存する
-			evaluateData.Side(side).selectablePos.push(pos)
+			sideEval.selectablePos.push(pos)
 		}
 	})
 
 	// 5th pass: トライアブルチェック
 	// undone: これチェックメイト確認前に早期returnできないかな
 	for(const side of [Side.A, Side.B]){
+		var sideEval = evaluateData.Side(side);
 		// 相手のトライアブル状況を確認
 		const enemySide = Utils.ReverseSide(side);
-		const myAttacableMap = evaluateData.Side(side).attackablePositionMap
+		const myAttacableMap = sideEval.attackablePositionMap
 		const tryablePositions = GetTryablePositions(enemySide, boardData, myAttacableMap)
 
 		// 相手が2箇所以上トライアブルならトライは防げない
 		if(tryablePositions.length >= 2){
-			evaluateData.Side(side).state = EvaluateState.GameOverWithTryable
+			sideEval.state = EvaluateState.GameOverWithTryable
 		}
 
 		// 相手が1箇所だけトライアブルなら、そこに対する着手可能手以外は許可できない
 		if(tryablePositions.length === 1){
 			const oldEnableMoves = new Array<Move>()
 			// clone
-			for(const move of evaluateData.Side(side).enableMoves){
+			for(const move of sideEval.enableMoves){
 				oldEnableMoves.push(move)
 			}
-			// enableMoves取り上げ
-			evaluateData.Side(side).enableMoves = []
-			evaluateData.Side(side).selectablePos = []
+			// 評価済みのenableMoves取り上げ
+			sideEval.enableMoves = []
+			sideEval.selectablePos = []
 
 			for(const move of oldEnableMoves){
 				if(move.to.EqualsTo(tryablePositions[0])){
 					// 見つかったので移動可能
-					evaluateData.Side(side).enableMoves.push(move)
-					evaluateData.Side(side).selectablePos.push(move.to)
+					sideEval.enableMoves.push(move)
+					sideEval.selectablePos.push(move.to)
 				}
 			}
 
 			// 見つからなかったらトライは防げない
-			if(evaluateData.Side(side).enableMoves.length === 0){
-				evaluateData.Side(side).state = EvaluateState.GameOverWithTryable
+			if(sideEval.enableMoves.length === 0){
+				sideEval.state = EvaluateState.GameOverWithTryable
 			}
 		}
 	}
 
-	// pass 6: playableなのにenableMoveがない場合はステイルメイト
+	// pass 6: playableなのに手駒もenableMoveもない場合はステイルメイト
 	// ※どうぶつしょうぎにおいては「トライ失敗する手しか残っていない」場合に発生する。チェスにおける本来のステイルメイトは存在しない
 	for(const side of [Side.A, Side.B]){
-		if(evaluateData.Side(side).enableMoves.length === 0 &&
-		evaluateData.Side(side).state === EvaluateState.Playable){
-			evaluateData.Side(side).state = EvaluateState.GameOverWithStalemate
+		var sideEval = evaluateData.Side(side);
+		const isPlayable = sideEval.state === EvaluateState.Playable;
+		const isMovalble = sideEval.enableMoves.length === 0;
+		const haveTegoma = side === Side.A ? tegomaSideA.length === 0 : tegomaSideB.length ===0;
+		const isStalemate = isPlayable && isMovalble && haveTegoma;
+		// console.log(
+		// 	`side check: ${side} isStalemate=${isStalemate} isPlayable=${isPlayable} isMovalble=${isMovalble} haveTegoma={haveTegoma}`, sideEval
+		// )
+		if(isStalemate){
+			sideEval.state = EvaluateState.GameOverWithStalemate
 		}
 	}
 
@@ -437,5 +457,5 @@ export const GetBoardScore = (
 export let DebugInfo = ""
 
 const AddDebugInfo = (log:string)=>{
-	DebugInfo += "\n"+log
+	// DebugInfo += "\n"+log
 }

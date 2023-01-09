@@ -37,12 +37,12 @@ export default function App() {
 	// 盤データ
 	const [boardData, setBoardData] = useState(new BoardData(InitialBoardData))
 
-	// 盤面評価状態
-	const [boardEvaluateData, setBoardEvaluateData] = useState(Evaluate(boardData))
-
 	// 手駒状態state
 	const [tegomaSideA, setTegomaSideA] = useState(new Array<Koma>())
 	const [tegomaSideB, setTegomaSideB] = useState(new Array<Koma>())
+
+	// 盤面評価状態
+	const [boardEvaluateData, setBoardEvaluateData] = useState(Evaluate(boardData, tegomaSideA,tegomaSideB))
 
 	// 手駒状態
 	const [isTegomaSelected, setTegomaSelected] = useState(false)
@@ -57,7 +57,7 @@ export default function App() {
 		// const newBoard = new BoardData(Debug_InitialBoardData_FastFinish)
 
 		setBoardData(newBoard)
-		setBoardEvaluateData(Evaluate(newBoard))
+		setBoardEvaluateData(Evaluate(newBoard, tegomaSideA,tegomaSideB))
 		setCurrentTurn(1)
 		setGameState(State.Playable)
 		setTegomaSideA(new Array<Koma>())
@@ -82,7 +82,7 @@ export default function App() {
 		setCurrentTurn(currentTurn + 1)
 		setCurrentSide(Utils.ReverseSide(currentSide))
 		setBoardData(newBoardData)
-		const newBoardEvaluateData = Evaluate(newBoardData)
+		const newBoardEvaluateData = Evaluate(newBoardData, tegomaSideA,tegomaSideB)
 		setBoardEvaluateData(newBoardEvaluateData)
 
 		// console.log(`NextTurn(): evaluatedData:`,boardEvaluateData,newBoardEvaluateData,newBoardData)

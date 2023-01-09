@@ -24,13 +24,8 @@ export const DoRandomAI1 = (
 	){
 		// 手駒があれば積極的に使う
 		// ※isCheckmate/isEnemyTryableの時は手駒を置いてる場合じゃないのでスルーする
-		// let newBoardData = boardData.Clone()
-		// let tegoma = tegomas.pop() as Koma
 		const allPos = boardData.SearchAllNull()
 		const pos = allPos[Utils.RandomRange(allPos.length)]
-		// newBoardData.Set(pos, {koma:tegoma, side:Side.B})
-		// NextTurn(newBoardData)
-
 		const result = new AIResult()
 		result.withPut = [0, pos]
 		return result
