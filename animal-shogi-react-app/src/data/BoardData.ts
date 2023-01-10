@@ -9,7 +9,14 @@ export class BoardData{
 	constructor(initialBoardData:Array<Array<CellData>>){
 		// deep copy
 		// - JSON経由で手抜き
-		this.cells = JSON.parse(JSON.stringify(initialBoardData));
+		// this.cells = JSON.parse(JSON.stringify(initialBoardData));
+		this.cells = []
+		for(var y=0 ; y<4 ; y++){
+			this.cells[y] = []
+			for(var x=0 ; x<3 ; x++){
+				this.cells[y][x] = initialBoardData[y][x]
+			}
+		}
 	}
 
 	public Clone(){

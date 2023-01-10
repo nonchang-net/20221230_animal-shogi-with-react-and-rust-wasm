@@ -10,7 +10,7 @@ import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
 import { AIResult} from './ai/AIResult';
 import { DoRandomAI1, DoRandomAI1WithMultipleSequence } from './ai/RandomAI';
-import { DoNormalAI } from './ai/NormalAI';
+import { DoNormalAI, DoNormalAIWithNegaMax, TemporaryState } from './ai/NormalAI';
 
 
 enum State {
@@ -273,12 +273,16 @@ export default function App() {
 		// ));
 
 		// AI実行: テスト3: 着手可能手を全評価するAIを実行
-		recursiveCall(DoNormalAI(
-			tegomaSideA,
-			tegomaSideB,
-			boardData,
-			boardEvaluateData
-		));
+		// recursiveCall(DoNormalAI(
+		// 	tegomaSideA,
+		// 	tegomaSideB,
+		// 	boardData,
+		// 	boardEvaluateData
+		// ));
+
+		recursiveCall(DoNormalAIWithNegaMax(
+			new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
+		))
 	}
 
 	// コンピューターの処理: 最終的にAIが結果を返したら

@@ -337,9 +337,9 @@ export const Evaluate = (
 	for(const side of [Side.A, Side.B]){
 		var sideEval = evaluateData.Side(side);
 		const isPlayable = sideEval.state === EvaluateState.Playable;
-		const isMovalble = sideEval.enableMoves.length === 0;
-		const haveTegoma = side === Side.A ? tegomaSideA.length === 0 : tegomaSideB.length ===0;
-		const isStalemate = isPlayable && isMovalble && haveTegoma;
+		const isMovalble = sideEval.enableMoves.length !== 0;
+		const haveTegoma = side === Side.A ? tegomaSideA.length !== 0 : tegomaSideB.length !==0 ;
+		const isStalemate = isPlayable && !isMovalble && !haveTegoma;
 		// console.log(
 		// 	`side check: ${side} isStalemate=${isStalemate} isPlayable=${isPlayable} isMovalble=${isMovalble} haveTegoma={haveTegoma}`, sideEval
 		// )
