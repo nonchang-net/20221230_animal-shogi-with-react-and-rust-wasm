@@ -3,10 +3,9 @@
  * - BoardDataを渡すとUI/AI処理に必要なBoardEvaluateDataを返すEvaluate()関数を提供
  * - 表現に必要なデータクラスを定義
  */
-import { CellData } from "../components/Cell";
 import Utils, { BoolMap, Move, Position, Positions } from "../Utils"
 import { BoardData } from "./BoardData"
-import { AttackablePosScore, CheckmateScore, EnableMoveScore, Koma, KomaScore, LionLineScore, Side, TegomaScore, TryableScore } from "./Constants"
+import { Koma, Side } from "./Constants"
 
 export enum EvaluateState {
 	Playable, // ゲーム続行可能
