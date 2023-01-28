@@ -324,6 +324,9 @@ export const Evaluate = (
 				}
 			}
 
+			// TODO: 持ち駒があればそれを配置してattackableになれば防げる
+			// xxxxxxxx
+
 			// 見つからなかったらトライは防げない
 			if(sideEval.enableMoves.length === 0){
 				sideEval.state = EvaluateState.GameOverWithTryable

@@ -21,6 +21,22 @@ enum State {
 
 export default function App() {
 
+	// wasmテスト
+
+	const wasm = './animal_shogi_rust_app.wasm'
+	fetch(wasm)
+		.then(response => response.arrayBuffer())
+		.then(bytes => WebAssembly.instantiate(bytes))
+		.then(results => {
+			console.log("ver 20230128 17:13");
+			//console.log("wasm execute result:", results.instance.exports.add(1, 2))
+
+			const ex:any = results.instance.exports;
+			console.log("wasm output:", ex.add(1, 2));
+		}
+	);
+	
+
 	// ゲーム状態
 	const [gameState, setGameState] = useState(State.SelectTurn)
 

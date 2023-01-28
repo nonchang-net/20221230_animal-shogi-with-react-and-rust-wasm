@@ -247,7 +247,7 @@ export class TemporaryState {
 	}
 
 	private static evaluateCount:number = 0;
-	private maxDepth:number = 3;
+	private maxDepth:number = 4;
 	private limitScore = 50000;
 
 	private NegaMax(
@@ -315,7 +315,7 @@ export const DoNormalAI = (
 ): AIResult => {
 	// return GetHighscoreHand(Side.B, board, tegomaSideA, tegomaSideB, evaluated)
 	const states = new TemporaryState(Side.B, board, tegomaSideA, tegomaSideB, evaluated)
-	let evaluateCount = 0;
+	// let evaluateCount = 0;
 	let highScore = -999999;
 
 	// 着手可能手の一覧を取得
@@ -335,7 +335,7 @@ export const DoNormalAI = (
 			selectedMove = move
 			// HighScoreDebugInfo = DebugInfo
 		}
-		evaluateCount ++;
+		// evaluateCount ++;
 	}
 
 	// 2nd pass: チェックメイトもトライアブルもない時は手駒評価
@@ -351,10 +351,10 @@ export const DoNormalAI = (
 			selectedPut = put
 			// HighScoreDebugInfo = DebugInfo
 		}
-		evaluateCount ++;
+		// evaluateCount ++;
 	}
 
-	if(selectedPut.index != -1){
+	if(selectedPut.index !== -1){
 		// 持ち駒からの成績の方がよい場合は、持ち駒を配置する
 		const result = new AIResult()
 		result.withPut = selectedPut
@@ -404,7 +404,7 @@ export const DoNormalAIWithNegaMax = (
 	}
 
 	// 手駒配置を意思決定
-	if(selectedPut.index != -1){
+	if(selectedPut.index !== -1){
 		const result = new AIResult()
 		result.withPut = selectedPut
 		return result
