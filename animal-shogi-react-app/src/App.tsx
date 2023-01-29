@@ -1,17 +1,77 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './css/App.module.css';
 
 import Board from './components/Board';
 import Infomation from './components/Captures';
 
-import { Debug_InitialBoardData_FastFinish, InitialBoardData, Koma, Side } from './data/Constants';
-import Utils, { Move, Position } from './Utils';
+import { AIType, Debug_InitialBoardData_FastFinish, InitialBoardData, Koma, Side } from './data/Constants';
+import Utils, { Move, Position, Put } from './Utils';
 import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
 import { AIResult} from './ai/AIResult';
-import { DoRandomAI1, DoRandomAI1WithMultipleSequence } from './ai/RandomAI';
+import { DoRandomAI1 } from './ai/RandomAI';
 import { DoNormalAI, DoNormalAIWithNegaMax, TemporaryState } from './ai/NormalAI';
 
+
+// wasmテスト
+
+const wasm = './animal_shogi_rust_app.wasm'
+let wasm_is_loaded = false;
+let get_next_hand_by_wasm:any = undefined; // TODO: これanyにするしかないのかな……？
+fetch(wasm)
+	.then(response => response.arrayBuffer())
+	.then(bytes => WebAssembly.instantiate(bytes))
+	.then(results => {
+		console.log("ver 20230128 17:13");
+
+		// tests:
+		// const ex:any = results.instance.exports;
+		// const wasm_result = ex.add(-3, 2);
+		// console.log("wasm output:", wasm_result);
+
+		// wasm呼び出し: negamax結果取得テスト
+		const ex:any = results.instance.exports;
+		get_next_hand_by_wasm = ex.get_next_hand;
+		const wasm_result = get_next_hand_by_wasm(
+			0, //side
+			 1, 2, 3, // board状態
+			 4, 5, 0,
+			-1,-2,-3,
+			-4,-5, 0,
+			1,1,1,0,0,0 // 手駒状態
+		);
+		// console.log("wasm output:", wasm_result);
+
+		// 返り値のNumver(f64)を4bitごとに区切って取り出す
+		// - 配列で受け取る方法が手間そうなので端折った
+		const ret1 = wasm_result & 0xF;
+		const ret2 = (wasm_result >> 4) & 0xF;
+		const ret3 = (wasm_result >> 8) & 0xF;
+		const ret4 = (wasm_result >> 12) & 0xF;
+
+		console.log("wasm output splitted:", ret1, ret2, ret3, ret4);
+
+		// 結果を[Move?, Put?]タプルにパース
+		let move_hand:Move|null = null;
+		let put_hand:Put|null = null;
+		if(ret1 == 4){
+			put_hand = {
+				index: ret2,
+				to: new Position(ret3, ret4)
+			};
+		}else{
+			move_hand = {
+				from: new Position(ret1, ret2),
+				to: new Position(ret3, ret4)
+			}
+		}
+		let hand:[Move|null, Put|null] = [move_hand, put_hand];
+
+		console.log("parsed hand:", hand);
+
+		wasm_is_loaded = true;
+	}
+);
 
 enum State {
 	SelectTurn,
@@ -21,21 +81,32 @@ enum State {
 
 export default function App() {
 
-	// wasmテスト
+	// 選択中のAIType
+	// const [aiTypeState, setAiTypeState] = useState(AIType.NegaMax3);
 
-	const wasm = './animal_shogi_rust_app.wasm'
-	fetch(wasm)
-		.then(response => response.arrayBuffer())
-		.then(bytes => WebAssembly.instantiate(bytes))
-		.then(results => {
-			console.log("ver 20230128 17:13");
-			//console.log("wasm execute result:", results.instance.exports.add(1, 2))
-
-			const ex:any = results.instance.exports;
-			console.log("wasm output:", ex.add(1, 2));
+	const [aiType, _] = useState([
+		AIType.Random,
+		AIType.Evaluate,
+		AIType.NegaMax3,
+		AIType.NegaMax5,
+		AIType.WasmNegaMax3,
+		AIType.WasmNegaMax5
+	])
+	const [aiTypeState, setAiTypeState] = useState(AIType.NegaMax3)
+	const AddAIType = aiType.map(Add => Add)
+	const handleAITypeChange = (e:any) => setAiTypeState((aiType[e.target.value]))
+	const getAiTypeName = (aiType:AIType):string => {
+		switch(aiType){
+			case 0: return "Random: 着手可能手から適当に選びます。";
+			case 1: return "Evaluate: 着手可能手の評価関数の高い手を選びます。";
+			case 2: return "NegaMax Depth 3: TypeScriptでnegamaxで三手先を評価します。";
+			case 3: return "NegaMax Depth 5: negamax 5手先評価です。重いです。";
+			case 4: return "wasm NegaMax 3: wasmでNegaMaxで3手先を評価します。";
+			case 5: return "wasm NegaMax 5: wasmでnegamaxで5手先評価です。重いです。"
+			default:
+				throw new Error(`undefined aiType: ${aiType}`);
 		}
-	);
-	
+	}
 
 	// ゲーム状態
 	const [gameState, setGameState] = useState(State.SelectTurn)
@@ -231,78 +302,79 @@ export default function App() {
 		NextTurn(newBoardData)
 	}
 
-	// コンピューター計算中かどうか
-	const [isComputing, setComputing] = useState(false)
-	const [computingProcess, setComputingProcess] = useState(0)
-	const [computingTotal, setComputingTotal] = useState(0)
-	const [computingCount, setComputingCount] = useState(0)
+	// コンピューター計算時間
 	const [computingStartTime, setComputingStartTime] = useState(Date.now)
-	const [computingTime, setComputingTime] = useState(Date.now)
+	const [computingTime, setComputingTime] = useState(0)
 
 	// コンピューターの手番処理
 	const ComputerTurn = ()=>{
-		// 再帰呼び出し
-		// - 処理が長いとブラウザ応答警告になるので、小分けに呼び出して回避する
-		// - 一発で結果が返ってくればsetTimeoutなしで完了
 
-		const recursiveCall = (result:AIResult)=>{
-			if(result.withNext){
-				if(!isComputing){
-					setComputing(true)
-					setComputingStartTime(Date.now)
-				}
-				const [current,total,count,Next] = result.withNext;
-				setComputingProcess(current)
-				setComputingTotal(total)
-				setComputingCount(count)
-				setComputingTime(Date.now() - computingStartTime);
-				// console.log(`withNext() ${current}/${total} (${count})`)
-				setTimeout(()=>{
-					// ちょっとUI側で待機してから再実行する
-					recursiveCall(Next())
-				},10)
-			}else{
-				// setComputing(false) // 結果は表示し続けるためコメントアウト中
+		// 処理時間表示
+		setComputingStartTime(Date.now);
 
-				// 完了表示にする
-				setComputingProcess(computingTotal)
-				setComputingTime(Date.now() - computingStartTime);
-
-				// AI結果を適用
-				ComputerTurnWithResult(result)
-			}
+		// AI分岐
+		switch(aiTypeState){
+			case AIType.Random:
+				// AI実行: テスト1: ランダムに手を選ぶAI
+				ComputerTurnWithResult(DoRandomAI1(
+					tegomaSideB,
+					boardData,
+					boardEvaluateData
+				));
+				return;
+			case AIType.Evaluate:
+				// AI実行: テスト3: 着手可能手を全評価するAIを実行
+				ComputerTurnWithResult(DoNormalAI(
+					tegomaSideA,
+					tegomaSideB,
+					boardData,
+					boardEvaluateData
+				));
+				return;
+			case AIType.NegaMax3:
+				// AI実行: negamax
+				ComputerTurnWithResult(
+					DoNormalAIWithNegaMax(
+						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
+					)
+				);
+				return;
+			case AIType.NegaMax5:
+				// AI実行: negamax
+				// TODO: 5手に変更する
+				ComputerTurnWithResult(
+					DoNormalAIWithNegaMax(
+						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
+					)
+				);
+				return;
+			case AIType.WasmNegaMax3:
+				// AI実行: negamax (TODO)
+				ComputerTurnWithResult(
+					DoNormalAIWithNegaMax(
+						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
+					)
+				);
+				return;
+			case AIType.WasmNegaMax5:
+				// AI実行: negamax (TODO)
+				ComputerTurnWithResult(
+					DoNormalAIWithNegaMax(
+						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
+					)
+				);
+				return;
+			default:
+				throw new Error(`undefined ai type : ${aiTypeState}`);
 		}
-
-		// AI実行: テスト1: 一瞬で応答を返すランダムAI
-		// recursiveCall(DoRandomAI1(
-		// 	tegomaSideB,
-		// 	boardData,
-		// 	boardEvaluateData
-		// ));
-
-		// AI実行: テスト2: 10回進捗情報を返してから完了応答を返すランダムAI
-		// setComputingStartTime(Date.now)
-		// recursiveCall(DoRandomAI1WithMultipleSequence(
-		// 	tegomaSideB,
-		// 	boardData,
-		// 	boardEvaluateData
-		// ));
-
-		// AI実行: テスト3: 着手可能手を全評価するAIを実行
-		// recursiveCall(DoNormalAI(
-		// 	tegomaSideA,
-		// 	tegomaSideB,
-		// 	boardData,
-		// 	boardEvaluateData
-		// ));
-
-		recursiveCall(DoNormalAIWithNegaMax(
-			new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
-		))
 	}
 
-	// コンピューターの処理: 最終的にAIが結果を返したら
+	// コンピューターの処理
 	const ComputerTurnWithResult = (result:AIResult)=>{
+
+		// 完了表示にする
+		// setComputingProcess(computingTotal);
+		setComputingTime(Date.now() - computingStartTime);
 
 		// ゲームオーバー判定が返ってきた
 		if(result.withState){
@@ -332,7 +404,6 @@ export default function App() {
 			// 移動実行
 			MoveAndNextTurn(move)
 		}
-
 	}
 
 	// 最初の先攻・後攻選択UI
@@ -420,9 +491,8 @@ export default function App() {
 				}
 				break;
 		}
-		if(isComputing){
-			elements.push(<div>CPU: {computingProcess}/{computingTotal} ({computingCount}) 経過時間: {computingTime}ms</div>)
-		}
+		elements.push(<div>CPU処理時間: {computingTime / 1000}秒</div>)
+		
 		return elements
 	}
 
@@ -465,6 +535,14 @@ export default function App() {
 						/>
 				</div>
 			</div>
+			AI選択 : 
+				<select
+					value={aiTypeState}
+					onChange={e => handleAITypeChange(e)}>
+				{
+					AddAIType.map((aiType, key) => <option value={key}>{getAiTypeName(aiType)}</option>)
+				}
+				</select>
 			<div className={styles.header}>
 				turn={currentTurn}<br />
 				{renderSide()}

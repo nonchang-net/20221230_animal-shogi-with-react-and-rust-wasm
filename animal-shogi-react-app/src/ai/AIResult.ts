@@ -6,8 +6,6 @@ import { Move, Put } from '../Utils';
  * - AIの返却型
  */
 export class AIResult{
-	// 完了してない時の応答
-	public withNext?: [current:number, total:number, count:number, Next:()=>AIResult]
 	// 駒移動の応答
 	public withMove?: Move
 	// 手駒配置の応答

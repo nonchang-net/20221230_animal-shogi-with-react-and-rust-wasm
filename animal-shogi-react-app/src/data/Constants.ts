@@ -5,6 +5,15 @@
 
 import { CellData } from "../components/Cell";
 
+export enum AIType {
+    Random,
+    Evaluate,
+    NegaMax3,
+    NegaMax5,
+    WasmNegaMax3,
+    WasmNegaMax5,
+}
+
 // どちらサイドの駒かを判別するenum
 export enum Side{
     Free = 0,
