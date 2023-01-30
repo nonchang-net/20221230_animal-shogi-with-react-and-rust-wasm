@@ -8,6 +8,7 @@ import { AIResult } from './AIResult';
 // 評価中のデータのセット
 // - セットで引き回すデータが多いのでくくっておく
 export class TemporaryState {
+	maxDepth:Number
 	side:Side
 	board:BoardData
 	tegomaSideA:Tegomas
@@ -16,14 +17,16 @@ export class TemporaryState {
 	DebugInfo = ""
 	
 	constructor(
+		maxDepth:Number,
 		side:Side,
 		board:BoardData,
 		tegomaSideA:Tegomas,
 		tegomaSideB:Tegomas,
 		evaluated:BoardEvaluateData
 	){
-		this.side = side
-		this.board = board // .Clone()
+		this.maxDepth = maxDepth;
+		this.side = side;
+		this.board = board; // .Clone()
 		this.tegomaSideA = []
 		for(const tegoma of tegomaSideA) this.tegomaSideA.push(tegoma)
 		this.tegomaSideB = []
@@ -176,6 +179,7 @@ export class TemporaryState {
 		// console.log(`move eval:`,move, moveCell, score)
 
 		return new TemporaryState(
+			this.maxDepth,
 			this.EnemySide(),// negamax準備のため、手を打ったcloneのsideは反転させる
 			newBoard,
 			this.tegomaSideA,
@@ -207,6 +211,7 @@ export class TemporaryState {
 		const newEvaluated = Evaluate(newBoard, this.tegomaSideA, this.tegomaSideB);
 
 		return new TemporaryState(
+			this.maxDepth,
 			this.EnemySide(),// negamax準備のため、手を打ったcloneのsideは反転させる
 			newBoard,
 			this.tegomaSideA,
@@ -247,7 +252,6 @@ export class TemporaryState {
 	}
 
 	private static evaluateCount:number = 0;
-	private maxDepth:number = 4;
 	private limitScore = 50000;
 
 	private NegaMax(
@@ -314,7 +318,7 @@ export const DoNormalAI = (
 	evaluated:BoardEvaluateData
 ): AIResult => {
 	// return GetHighscoreHand(Side.B, board, tegomaSideA, tegomaSideB, evaluated)
-	const states = new TemporaryState(Side.B, board, tegomaSideA, tegomaSideB, evaluated)
+	const states = new TemporaryState(-1, Side.B, board, tegomaSideA, tegomaSideB, evaluated)
 	// let evaluateCount = 0;
 	let highScore = -999999;
 

@@ -22,7 +22,7 @@ fetch(wasm)
 	.then(response => response.arrayBuffer())
 	.then(bytes => WebAssembly.instantiate(bytes))
 	.then(results => {
-		console.log("ver 20230128 17:13");
+		// console.log("ver 20230128 17:13");
 
 		// tests:
 		// const ex:any = results.instance.exports;
@@ -32,42 +32,45 @@ fetch(wasm)
 		// wasm呼び出し: negamax結果取得テスト
 		const ex:any = results.instance.exports;
 		get_next_hand_by_wasm = ex.get_next_hand;
-		const wasm_result = get_next_hand_by_wasm(
-			0, //side
-			 1, 2, 3, // board状態
-			 4, 5, 0,
-			-1,-2,-3,
-			-4,-5, 0,
-			1,1,1,0,0,0 // 手駒状態
-		);
-		// console.log("wasm output:", wasm_result);
 
-		// 返り値のNumver(f64)を4bitごとに区切って取り出す
-		// - 配列で受け取る方法が手間そうなので端折った
-		const ret1 = wasm_result & 0xF;
-		const ret2 = (wasm_result >> 4) & 0xF;
-		const ret3 = (wasm_result >> 8) & 0xF;
-		const ret4 = (wasm_result >> 12) & 0xF;
+		// 繋ぎ込めてるかテストする
+		// const wasm_result = get_next_hand_by_wasm(
+		// 	3, // negamax depth
+		// 	0, // side
+		// 	 1, 2, 3, // board状態
+		// 	 4, 5, 0,
+		// 	-1,-2,-3,
+		// 	-4,-5, 0,
+		// 	1,1,1,0,0,0 // 手駒状態
+		// );
+		// // console.log("wasm output:", wasm_result);
 
-		console.log("wasm output splitted:", ret1, ret2, ret3, ret4);
+		// // 返り値のNumver(f64)を4bitごとに区切って取り出す
+		// // - 配列で受け取る方法が手間そうなので端折った
+		// const ret1 = wasm_result & 0xF;
+		// const ret2 = (wasm_result >> 4) & 0xF;
+		// const ret3 = (wasm_result >> 8) & 0xF;
+		// const ret4 = (wasm_result >> 12) & 0xF;
 
-		// 結果を[Move?, Put?]タプルにパース
-		let move_hand:Move|null = null;
-		let put_hand:Put|null = null;
-		if(ret1 == 4){
-			put_hand = {
-				index: ret2,
-				to: new Position(ret3, ret4)
-			};
-		}else{
-			move_hand = {
-				from: new Position(ret1, ret2),
-				to: new Position(ret3, ret4)
-			}
-		}
-		let hand:[Move|null, Put|null] = [move_hand, put_hand];
+		// console.log("wasm output splitted:", ret1, ret2, ret3, ret4);
 
-		console.log("parsed hand:", hand);
+		// // 結果を[Move?, Put?]タプルにパース
+		// let move_hand:Move|null = null;
+		// let put_hand:Put|null = null;
+		// if(ret1 == 4){
+		// 	put_hand = {
+		// 		index: ret2,
+		// 		to: new Position(ret3, ret4)
+		// 	};
+		// }else{
+		// 	move_hand = {
+		// 		from: new Position(ret1, ret2),
+		// 		to: new Position(ret3, ret4)
+		// 	}
+		// }
+		// let hand:[Move|null, Put|null] = [move_hand, put_hand];
+
+		// console.log("parsed hand:", hand);
 
 		wasm_is_loaded = true;
 	}
@@ -315,15 +318,17 @@ export default function App() {
 		// AI分岐
 		switch(aiTypeState){
 			case AIType.Random:
-				// AI実行: テスト1: ランダムに手を選ぶAI
+				// ランダムに手を選ぶAI
+				// 着手可能手からのランダムなのであんま適当にやると負けるw
 				ComputerTurnWithResult(DoRandomAI1(
 					tegomaSideB,
 					boardData,
 					boardEvaluateData
 				));
 				return;
+
 			case AIType.Evaluate:
-				// AI実行: テスト3: 着手可能手を全評価するAIを実行
+				// 着手可能手を全評価するAIを実行
 				ComputerTurnWithResult(DoNormalAI(
 					tegomaSideA,
 					tegomaSideB,
@@ -331,43 +336,143 @@ export default function App() {
 					boardEvaluateData
 				));
 				return;
+
 			case AIType.NegaMax3:
-				// AI実行: negamax
+				// negamax depth 3
 				ComputerTurnWithResult(
 					DoNormalAIWithNegaMax(
-						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
+						new TemporaryState(3, Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
 					)
 				);
 				return;
+
 			case AIType.NegaMax5:
-				// AI実行: negamax
-				// TODO: 5手に変更する
+				// negamax depth 5
 				ComputerTurnWithResult(
 					DoNormalAIWithNegaMax(
-						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
+						new TemporaryState(5, Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
 					)
 				);
 				return;
+
 			case AIType.WasmNegaMax3:
-				// AI実行: negamax (TODO)
+				// wasm negamax depth 3
 				ComputerTurnWithResult(
-					DoNormalAIWithNegaMax(
-						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
-					)
+					DoWasmAI(3)
 				);
 				return;
+
 			case AIType.WasmNegaMax5:
-				// AI実行: negamax (TODO)
+				// wasm negamax depth 5
 				ComputerTurnWithResult(
-					DoNormalAIWithNegaMax(
-						new TemporaryState(Side.B, boardData, tegomaSideA, tegomaSideB, boardEvaluateData)
-					)
+					DoWasmAI(5)
 				);
 				return;
+
 			default:
 				throw new Error(`undefined ai type : ${aiTypeState}`);
 		}
 	}
+
+	// wasm使ってAI処理
+	const DoWasmAI = (max_depth:number): AIResult => {
+		if(!wasm_is_loaded){
+			throw new Error(`DoWasmAI()の実行にはwasmの初期化完了が必要です。`);
+		}
+
+		// 引数用に変換したセル一覧を取得
+		const c = CurrentBoardToNumberArray();
+		if(c.length !== 12){
+			throw new Error(`CurrentBoardToNumberArray() の結果の長さが12ではありませんでした。`);
+		}
+
+		// 両サイドの手駒情報を配列にする
+		let t = [0,0,0,0,0,0];
+		let tegomaIndex = 0;
+		for(const tegoma of tegomaSideA){
+			t[tegomaIndex] = GetWasmKomaNumber(tegoma, Side.A);
+			tegomaIndex++;
+		}
+		for(const tegoma of tegomaSideB){
+			t[tegomaIndex] = GetWasmKomaNumber(tegoma, Side.B);
+			tegomaIndex++
+		}
+
+		// wasmに計算させる
+		const wasm_result = get_next_hand_by_wasm(
+			max_depth,
+			1, //side: 今回のUIではCPUは常にSide.Bなので常時1でok
+			c[0],c[1],c[2], c[3],c[4],c[5], c[6],c[7],c[8], c[9],c[10],c[11],
+			t[0],t[1],t[2],t[3],t[4],t[5],
+		)
+
+		// 返り値のNumver(f64)を4bitごとに区切って取り出す
+		// - 配列で受け取る方法が手間そうなので端折った
+		const ret1 = wasm_result & 0xF;
+		const ret2 = (wasm_result >> 4) & 0xF;
+		const ret3 = (wasm_result >> 8) & 0xF;
+		const ret4 = (wasm_result >> 12) & 0xF;
+
+		console.log("wasm output splitted:", ret1, ret2, ret3, ret4);
+
+		// 結果を[Move?, Put?]タプルにパース
+		let move_hand:Move|null = null;
+		if(ret1 === 4){
+			// 手駒配置を意思決定
+			const result = new AIResult()
+			result.withPut = {
+				index: ret2,
+				to: new Position(ret3, ret4)
+			}
+			return result
+		}else{
+			// 移動の意思決定状態を返す
+			move_hand = {
+				from: new Position(ret1, ret2),
+				to: new Position(ret3, ret4)
+			}
+			const result = new AIResult()
+			move_hand.promotion = (
+				boardData.Get(move_hand.from).koma === Koma.Hiyoko &&
+				move_hand.to.y === 3
+			)
+			result.withMove = move_hand
+			return result;
+		}
+	}
+
+	// wasmに渡す引数用の配列を作成
+	const CurrentBoardToNumberArray = (): Array<number> => {
+		let result = [];
+        for(let y=0; y<4 ; y++){
+            for(let x=0; x<3 ; x++){
+				const cell = boardData.Get(new Position(x,y));
+				const side = cell.side;
+				const koma = cell.koma;
+				result.push(GetWasmKomaNumber(koma, side));
+			}
+		}
+		return result;
+	}
+
+	// コマ情報をwasm引数用の数字に変換する
+	const GetWasmKomaNumber = (koma:Koma, side:Side): number => {
+		// 一応検証: Koma.NullでsideがFreeじゃないものは何かがおかしい
+		if(koma === Koma.NULL && side !== Side.Free){
+			throw new Error(`GetWasmKomaNumber(): komaがnullなのにsideがFreeじゃないケースでした`);
+		}
+		const sideFactor = side === Side.A ? 1 : -1 ;
+		switch(koma){
+			case Koma.NULL : return 0;
+			case Koma.Hiyoko: return 1 * sideFactor;
+			case Koma.Kirin: return 2 * sideFactor;
+			case Koma.Zou: return 3 * sideFactor;
+			case Koma.Niwatori: return 4 * sideFactor;
+			case Koma.Lion: return 5 * sideFactor;
+			default:
+				throw new Error(`undefined koma: ${koma}`);
+		}
+	};
 
 	// コンピューターの処理
 	const ComputerTurnWithResult = (result:AIResult)=>{
