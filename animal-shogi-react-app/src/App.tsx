@@ -4,8 +4,18 @@ import styles from './css/App.module.css';
 import Board from './components/Board';
 import Infomation from './components/Captures';
 
-import { AIType, Debug_InitialBoardData_FastFinish, InitialBoardData, Koma, Side } from './data/Constants';
-import Utils, { Move, Position, Put } from './Utils';
+import {
+	AIType,
+	//Debug_InitialBoardData_FastFinish,
+	InitialBoardData,
+	Koma,
+	Side
+} from './data/Constants';
+import Utils, {
+	Move,
+	Position,
+	// Put
+} from './Utils';
 import { Evaluate, EvaluateState } from './data/BoardEvaluateData';
 import { BoardData } from './data/BoardData';
 import { AIResult} from './ai/AIResult';
@@ -85,19 +95,17 @@ enum State {
 export default function App() {
 
 	// 選択中のAIType
-	// const [aiTypeState, setAiTypeState] = useState(AIType.NegaMax3);
-
-	const [aiType, _] = useState([
+	const aiTypeArray = [
 		AIType.Random,
 		AIType.Evaluate,
 		AIType.NegaMax3,
 		AIType.NegaMax5,
 		AIType.WasmNegaMax3,
 		AIType.WasmNegaMax5
-	])
+	];
 	const [aiTypeState, setAiTypeState] = useState(AIType.NegaMax3)
-	const AddAIType = aiType.map(Add => Add)
-	const handleAITypeChange = (e:any) => setAiTypeState((aiType[e.target.value]))
+	const AddAIType = aiTypeArray.map(Add => Add)
+	const handleAITypeChange = (e:any) => setAiTypeState((aiTypeArray[e.target.value]))
 	const getAiTypeName = (aiType:AIType):string => {
 		switch(aiType){
 			case 0: return "Random: 着手可能手から適当に選びます。";
@@ -611,7 +619,10 @@ export default function App() {
 	
 	return (
 		<div className={styles.App}>
-			<header>どうぶつしょうぎ</header>
+			<header>
+				どうぶつしょうぎ&trade;<br />
+				(<a href="https://www.j-platpat.inpit.go.jp/c1800/TR/JP-2009-032168/F014B140A29B4421B8334F8951D1E478AEDC9619C6840E1AB19C6FCEAE1FF431/40/ja">j-latpat様商標情報リンク</a>)
+			</header>
 			{renderTurnSelect()}
 			<div className={styles.GameView}>
 				<div>
